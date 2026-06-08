@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản trị · CÒNG TAY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#fafafa;--surface:#fff;--ink:#0f1012;--ink-2:#6b7180;--line:#ececef;
+    --line-2:#e0e3e8;--accent:#ff3b25;--accent-soft:#ffece8;--radius:14px;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro",system-ui,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:680px;margin:0 auto;padding:40px 22px 80px}
+  .top{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+  .top svg{flex:0 0 auto}
+  h1{font-weight:800;font-size:24px;letter-spacing:-.02em}
+  .sub{color:var(--ink-2);font-size:14px;margin-bottom:30px}
+  a.back{color:var(--accent);text-decoration:none;font-size:14px;font-weight:600}
+
+  .drop{border:2px dashed var(--line-2);border-radius:var(--radius);background:var(--surface);
+    padding:42px 24px;text-align:center;cursor:pointer;transition:all .2s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .drop svg{color:var(--ink-2);margin-bottom:10px}
+  .drop b{display:block;font-weight:600;font-size:16px}
+  .drop span{color:var(--ink-2);font-size:14px}
+
+  .panel{display:none;margin-top:24px}
+  .panel.show{display:block}
+  .row{margin-bottom:18px}
+  label{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
+  input[type=text],select,textarea{width:100%;font-family:inherit;font-size:15px;color:var(--ink);
+    background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;outline:none;
+    transition:border-color .2s,box-shadow .2s}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+  textarea{resize:vertical;min-height:74px}
+  .hint{color:var(--ink-2);font-size:12.5px;margin-top:6px}
+
+  .thumbarea{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:start}
+  .preview{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#eee;border:1px solid var(--line-2)}
+  .preview img{width:100%;height:100%;object-fit:cover;display:block}
+  .slider{width:100%;margin-top:6px}
+  .btn-mini{display:inline-block;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    background:var(--ink);color:#fff;border:none;border-radius:8px;padding:9px 13px;margin-top:8px}
+  .btn-mini.alt{background:var(--surface);color:var(--ink);border:1px solid var(--line-2);margin-left:6px}
+
+  .submit{width:100%;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;color:#fff;
+    background:var(--accent);border:none;border-radius:12px;padding:15px;margin-top:8px;transition:opacity .2s}
+  .submit:disabled{opacity:.5;cursor:not-allowed}
+
+  .bar{height:8px;background:var(--line);border-radius:100px;overflow:hidden;margin-top:16px;display:none}
+  .bar.show{display:block}
+  .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+  .msg{margin-top:14px;font-size:14px;padding:12px 14px;border-radius:10px;display:none}
+  .msg.show{display:block}
+  .msg.ok{background:#e7f7ec;color:#1a7f43}
+  .msg.err{background:var(--accent-soft);color:#c22a18}
+  @media(max-width:560px){.thumbarea{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+      <circle cx="15" cy="30" r="10" stroke="#ff3b25" stroke-width="2.6"/>
+      <circle cx="33" cy="30" r="10" stroke="#0f1012" stroke-width="2.6"/>
+      <path d="M19 12h10" stroke="#ff3b25" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M15 20v-4a4 4 0 0 1 4-4M33 20v-4a4 4 0 0 0-4-4" stroke="#0f1012" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>
+    <h1>Đăng video</h1>
+  </div>
+  <p class="sub">Trang quản trị · <a class="back" href="/">← Về trang chủ</a></p>
+
+  <!-- KÉO THẢ -->
+  <div class="drop" id="drop">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+      <path d="M12 16V4m0 0L8 8m4-4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round"/>
+    </svg>
+    <b>Kéo video vào đây</b>
+    <span>hoặc bấm để chọn file (.mp4 khuyến nghị)</span>
+    <input type="file" id="file" accept="video/*" hidden>
+  </div>
+
+  <!-- FORM -->
+  <div class="panel" id="panel">
+    <div class="row">
+      <label>Tiêu đề</label>
+      <input type="text" id="title" placeholder="Tên video">
+    </div>
+    <div class="row">
+      <label>Danh mục</label>
+      <select id="category"></select>
+    </div>
+    <div class="row">
+      <label>Mô tả (tùy chọn)</label>
+      <textarea id="desc" placeholder="Mô tả ngắn..."></textarea>
+    </div>
+    <div class="row">
+      <label>Ảnh đại diện (thumbnail)</label>
+      <div class="thumbarea">
+        <div class="preview"><img id="thumbImg" alt=""></div>
+        <div>
+          <input type="range" id="slider" class="slider" min="0" max="100" value="0" step="1">
+          <div class="hint">Kéo thanh trượt để chọn khung hình, hoặc tải ảnh riêng.</div>
+          <button class="btn-mini" id="capBtn" type="button">Dùng khung hình này</button>
+          <button class="btn-mini alt" id="upBtn" type="button">Tải ảnh riêng</button>
+          <input type="file" id="thumbFile" accept="image/*" hidden>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <label>Thời lượng</label>
+      <input type="text" id="duration" placeholder="vd: 4:12">
+    </div>
+    <button class="submit" id="submit">Đăng video</button>
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<video id="vid" style="display:none" muted playsinline></video>
+<canvas id="canvas" style="display:none"></canvas>
+
+<script>
+const CATS = ["Còng tay Trung Quốc","Còng tay Việt Nam","Còng tay Hàn Quốc","Còng tay Thái Lan",
+  "Còng tay quốc tế","Còng tay trong phim Việt Nam","Còng tay trong phim Trung Quốc","Còng tay trong phim nước ngoài"];
+const CHUNK = 50 * 1024 * 1024; // 50MB mỗi phần
+
+const $ = id => document.getElementById(id);
+const drop=$("drop"),fileIn=$("file"),panel=$("panel"),vid=$("vid"),canvas=$("canvas"),
+      thumbImg=$("thumbImg"),slider=$("slider"),msg=$("msg"),bar=$("bar"),barFill=$("barFill"),submit=$("submit");
+let videoFile=null, thumbData="", customThumb=false;
+
+CATS.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;$("category").appendChild(o);});
+
+function slug(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D')
+  .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||"video";}
+function fmt(t){t=Math.round(t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
+function showMsg(text,ok){msg.textContent=text;msg.className="msg show "+(ok?"ok":"err");}
+
+/* chọn / kéo thả file */
+drop.onclick=()=>fileIn.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add("over");};
+drop.ondragleave=()=>drop.classList.remove("over");
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);};
+fileIn.onchange=e=>{if(e.target.files[0])handleFile(e.target.files[0]);};
+
+function handleFile(f){
+  if(!f.type.startsWith("video/")){showMsg("Vui lòng chọn file video.",false);return;}
+  videoFile=f;customThumb=false;
+  panel.classList.add("show");
+  drop.querySelector("b").textContent=f.name;
+  vid.src=URL.createObjectURL(f);
+  vid.onloadedmetadata=()=>{
+    $("duration").value=fmt(vid.duration);
+    slider.max=Math.floor(vid.duration);
+    const start=Math.min(3,vid.duration/2);
+    slider.value=Math.floor(start);
+    vid.currentTime=start;
+  };
+  vid.onseeked=()=>{ if(!customThumb) capture(); };
+}
+
+function capture(){
+  const w=640,h=Math.round(640*vid.videoHeight/vid.videoWidth)||360;
+  canvas.width=w;canvas.height=h;
+  canvas.getContext("2d").drawImage(vid,0,0,w,h);
+  thumbData=canvas.toDataURL("image/jpeg",0.82);
+  thumbImg.src=thumbData;
+}
+slider.oninput=()=>{customThumb=false;vid.currentTime=+slider.value;};
+$("capBtn").onclick=()=>{customThumb=false;capture();};
+$("upBtn").onclick=()=>$("thumbFile").click();
+$("thumbFile").onchange=e=>{const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{thumbData=r.result;thumbImg.src=thumbData;customThumb=true;};r.readAsDataURL(f);};
+
+/* đăng video */
+async function postJSON(url,data){
+  const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
+  const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||("HTTP "+r.status));return j;}
+
+submit.onclick=async()=>{
+  const title=$("title").value.trim(), category=$("category").value,
+        desc=$("desc").value.trim(), duration=$("duration").value.trim();
+  if(!videoFile){showMsg("Chưa chọn video.",false);return;}
+  if(!title){showMsg("Hãy nhập tiêu đề.",false);return;}
+  submit.disabled=true;bar.classList.add("show");msg.classList.remove("show");
+  try{
+    const ext=(videoFile.name.match(/\.[^.]+$/)||[".mp4"])[0].toLowerCase();
+    const key=slug(title)+"-"+Date.now()+ext;
+    // 1) bắt đầu multipart
+    const {uploadId}=await postJSON("/api/admin/upload?action=start",{key,contentType:videoFile.type});
+    // 2) tải từng phần
+    const parts=[];let part=1;
+    for(let off=0;off<videoFile.size;off+=CHUNK){
+      const blob=videoFile.slice(off,off+CHUNK);
+      const r=await fetch(`/api/admin/upload?action=part&key=${encodeURIComponent(key)}&uploadId=${encodeURIComponent(uploadId)}&part=${part}`,
+        {method:"POST",body:blob});
+      const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||"Lỗi tải phần "+part);
+      parts.push({partNumber:part,etag:j.etag});part++;
+      barFill.style.width=Math.min(100,Math.round((off+CHUNK)/videoFile.size*92))+"%";
+    }
+    // 3) hoàn tất
+    await postJSON("/api/admin/upload?action=complete",{key,uploadId,parts});
+    barFill.style.width="96%";
+    // 4) lưu metadata + thumbnail
+    const thumbBase64=thumbData?thumbData.split(",")[1]:"";
+    await postJSON("/api/admin/save",{title,category,desc,duration,videoKey:key,thumbBase64});
+    barFill.style.width="100%";
+    showMsg("Đăng thành công! Video đã xuất hiện trên trang chủ.",true);
+    setTimeout(()=>{location.reload();},1600);
+  }catch(e){
+    showMsg("Lỗi: "+e.message,false);
+    submit.disabled=false;
+  }
+};
+</script>
+</body>
+</html>
