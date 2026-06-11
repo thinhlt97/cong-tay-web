@@ -1,0 +1,11 @@
+# Cloudflare / build cache
+.wrangler/
+
+# Claude Code local config (chứa quyền cục bộ, không công khai)
+.claude/
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store

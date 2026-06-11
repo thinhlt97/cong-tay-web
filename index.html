@@ -153,7 +153,7 @@
         <path d="M15 20v-4a4 4 0 0 1 4-4M33 20v-4a4 4 0 0 0-4-4" stroke="#0f1012" stroke-width="2.6" stroke-linecap="round"/>
         <path d="M19 12h10" stroke="#ff3b25" stroke-width="2.6" stroke-linecap="round"/>
       </svg>
-      <h1>CÒNG TAY</h1>
+      <h1 data-site-title>CÒNG TAY</h1>
     </a>
     <div class="navlinks">
       <a class="simple" href="#top">Trang chủ</a>
@@ -173,7 +173,7 @@
   <span id="top"></span>
   <header class="hero">
     <div class="kicker">Tuyển tập video</div>
-    <h2>CÒNG TAY</h2>
+    <h2 data-site-title>CÒNG TAY</h2>
     <p>Bộ sưu tập video giải trí, phân theo từng danh mục.</p>
     <div class="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -184,7 +184,7 @@
     <div class="quick" id="quick"></div>
   </header>
   <main id="content"><div class="state"><div class="spinner"></div><p>Đang tải video...</p></div></main>
-  <footer>© <span id="yr"></span> CÒNG TAY — Tuyển tập video giải trí.</footer>
+  <footer>© <span id="yr"></span> <span id="footerText">CÒNG TAY — Tuyển tập video giải trí.</span></footer>
 </div>
 
 <div class="modal" id="modal">
@@ -206,14 +206,14 @@ const content=document.getElementById('content'),ddmenu=document.getElementById(
       quick=document.getElementById('quick'),qEl=document.getElementById('q'),
       modal=document.getElementById('modal'),pframe=document.getElementById('pframe'),
       nav=document.getElementById('nav');
-let VIDEOS=[], query="";
+let VIDEOS=[], CATEGORIES=[], SETTINGS={}, query="";
 document.getElementById('yr').textContent=new Date().getFullYear();
 
 function slug(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 
-/* biểu tượng theo danh mục: phim -> 🎬, còn lại theo quốc gia */
-function catIcon(cat){const c=cat.toLowerCase();
+/* biểu tượng theo danh mục: tra trong categories.json trước, nếu không có thì suy theo từ khóa */
+function guessIcon(cat){const c=cat.toLowerCase();
   if(c.includes("phim")) return "🎬";
   if(c.includes("trung qu")) return "🇨🇳";
   if(c.includes("việt nam")||c.includes("viet nam")) return "🇻🇳";
@@ -221,9 +221,24 @@ function catIcon(cat){const c=cat.toLowerCase();
   if(c.includes("thái")||c.includes("thai")) return "🇹🇭";
   if(c.includes("quốc tế")||c.includes("quoc te")) return "🌍";
   return "🔒";}
+function catIcon(cat){const found=CATEGORIES.find(c=>c.name===cat);
+  return (found&&found.icon)||guessIcon(cat);}
 
 function groupByCategory(list){const m=new Map();
   list.forEach(v=>{if(!m.has(v.category))m.set(v.category,[]);m.get(v.category).push(v);});return m;}
+
+/* thứ tự danh mục: theo categories.json trước, các danh mục lẻ (chỉ có ở video) xếp cuối */
+function orderedGroups(){const map=groupByCategory(VIDEOS),out=[],seen=new Set();
+  CATEGORIES.forEach(c=>{if(map.has(c.name)){out.push([c.name,map.get(c.name)]);seen.add(c.name);}});
+  map.forEach((items,name)=>{if(!seen.has(name))out.push([name,items]);});
+  return out;}
+
+function applySettings(){const s=SETTINGS||{};
+  if(s.siteTitle){document.querySelectorAll('[data-site-title]').forEach(el=>el.textContent=s.siteTitle);
+    document.title=s.siteTitle+" · Tuyển tập video";}
+  if(s.heroKicker!=null)document.querySelector('.hero .kicker').textContent=s.heroKicker;
+  if(s.heroSubtitle!=null)document.querySelector('.hero p').textContent=s.heroSubtitle;
+  if(s.footer!=null)document.getElementById('footerText').textContent=s.footer;}
 
 function cardHTML(v,delay){const idx=VIDEOS.indexOf(v);
   const thumb=v.thumb?`<img src="${v.thumb}" alt="" loading="lazy">`:`<div class="gen">${catIcon(v.category)}</div>`;
@@ -232,16 +247,16 @@ function cardHTML(v,delay){const idx=VIDEOS.indexOf(v);
     <div class="cbody"><div class="cat">${v.category}</div><h4>${v.title}</h4><p>${v.desc||""}</p></div>
   </article>`;}
 
-function buildMenu(){const map=groupByCategory(VIDEOS);let dd="",qk="";
-  map.forEach((items,cat)=>{const id="cat-"+slug(cat),ic=catIcon(cat);
+function buildMenu(){let dd="",qk="";
+  orderedGroups().forEach(([cat,items])=>{const id="cat-"+slug(cat),ic=catIcon(cat);
     dd+=`<a href="#${id}"><span class="ic">${ic}</span>${cat}<b>${items.length}</b></a>`;
     qk+=`<a href="#${id}"><span class="ic">${ic}</span>${cat}</a>`;});
   ddmenu.innerHTML=dd;quick.innerHTML=qk;}
 
 let io;
 function render(){
-  const map=groupByCategory(VIDEOS);let html="",any=false;
-  map.forEach((items,cat)=>{
+  let html="",any=false;
+  orderedGroups().forEach(([cat,items])=>{
     const shown=items.filter(v=>!query||(v.title+v.desc+v.category).toLowerCase().includes(query));
     if(!shown.length)return;any=true;const id="cat-"+slug(cat);
     html+=`<section class="catsec" id="${id}">
@@ -277,6 +292,16 @@ qEl.oninput=e=>{query=e.target.value.toLowerCase().trim();render();};
 addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>10));
 
 async function load(){
+  // danh mục + settings: tải song song, lỗi cũng không chặn trang
+  try{
+    const [cats,sett]=await Promise.all([
+      fetch("/api/categories?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).catch(()=>[]),
+      fetch("/api/settings?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).catch(()=>({})),
+    ]);
+    if(Array.isArray(cats))CATEGORIES=cats;
+    if(sett&&typeof sett==="object")SETTINGS=sett;
+    applySettings();
+  }catch(_){/* dùng mặc định viết cứng trong HTML */}
   try{
     const res=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});
     if(!res.ok) throw new Error("HTTP "+res.status);

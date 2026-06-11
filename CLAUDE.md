@@ -1,0 +1,130 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project overview
+
+**Còng Tay Web** — a Vietnamese video library website about handcuffs (escapology, magic, product reviews, film clips), hosted entirely on Cloudflare. No build step, no npm dependencies — every file is deployed as-is via `npx wrangler deploy`.
+
+## Deploy
+
+```bash
+# Deploy to Cloudflare Workers (requires wrangler auth)
+npx wrangler deploy
+
+# Preview locally (no R2 binding — APIs will fail, static pages work)
+npx wrangler dev
+```
+
+The GitHub repo (`thinhlt97/cong-tay-web`, branch `main`) is connected to Cloudflare Workers Build, which runs `npx wrangler deploy` automatically on every push.
+
+## Tooling for content management
+
+```bash
+# Generate thumbnail from video (frame at 5s, 640px wide)
+ffmpeg -ss 00:00:05 -i "video.mp4" -frames:v 1 -vf "scale=640:-1" -q:v 3 "video.jpg"
+
+# Upload a video to R2
+rclone copy "video.mp4" r2:handcuff -P
+
+# Upload all thumbnails
+rclone copy . r2:handcuff --include "*.jpg" -P
+
+# Sync videos.json to R2
+rclone copy "videos.json" r2:handcuff -P
+
+# List bucket contents
+rclone ls r2:handcuff
+```
+
+## Architecture
+
+The project is a **Cloudflare Workers static assets** deployment — a single `worker.js` handles API routes; all other requests fall through to the static file handler (`env.ASSETS.fetch`).
+
+```
+Browser
+  ├─ GET /                → worker.js → ASSETS (index.html)
+  ├─ GET /admin           → worker.js → ASSETS (admin.html)
+  ├─ GET /api/videos      → worker.js reads videos.json from R2
+  ├─ GET /api/categories  → worker.js reads categories.json from R2 (defaults if missing)
+  ├─ GET /api/settings    → worker.js reads settings.json from R2 (defaults if missing)
+  ├─ POST /api/admin/upload      → worker.js multipart upload to R2
+  ├─ POST /api/admin/save        → worker.js saves thumbnail + prepends to videos.json
+  │                                 (also auto-registers a new category in categories.json)
+  ├─ PUT  /api/admin/videos      → worker.js replaces videos.json (edit/delete/reorder)
+  ├─ PUT  /api/admin/categories  → worker.js replaces categories.json
+  └─ PUT  /api/admin/settings    → worker.js replaces settings.json
+
+R2 bucket "handcuff": video files (.mp4), thumbnails (.jpg), videos.json,
+                      categories.json, settings.json
+  - Videos/thumbnails served publicly via https://pub-xxxx.r2.dev/<key>
+  - JSON data served via /api/* (same-origin, no CORS needed)
+```
+
+**Admin page (`admin.html`) is a 4-tab management UI:**
+- **Đăng video** — the drag-and-drop upload flow (unchanged).
+- **Quản lý video** — list/edit/delete/reorder all videos; saves the whole list via `PUT /api/admin/videos`. Array order = display order on the homepage (within each category).
+- **Danh mục** — add/rename/delete/reorder categories + custom emoji icon; saves via `PUT /api/admin/categories`.
+- **Trang chủ** — edit homepage texts (site title, kicker, subtitle, footer); saves via `PUT /api/admin/settings`.
+
+Reordering uses a `makeSortable()` helper (HTML5 drag via the ⠿ handle, plus ▲▼ buttons). Order is read from the DOM at save time, so reordering needs no separate state sync.
+
+**Key files:**
+- `worker.js` — all server-side logic (API router + static fallback)
+- `wrangler.jsonc` — Worker config: `main`, `assets`, R2 binding `BUCKET → handcuff`, env var `PUBLIC_BASE`
+- `index.html` — public viewer: fetches `/api/videos`, renders grouped-by-category grid, modal player
+- `admin.html` — drag-and-drop upload UI: reads duration/thumbnail client-side, calls `/api/admin/upload` (multipart, 50 MB chunks) then `/api/admin/save`
+- `.assetsignore` — prevents `worker.js`, `wrangler.jsonc`, the `*.json` data files, etc. from being served as public assets
+- `videos.json`, `categories.json`, `settings.json` — local samples only; the live data lives in R2
+
+## Configuration
+
+`PUBLIC_BASE` in `wrangler.jsonc` must be set to the real R2 public development URL (`pub-xxxx.r2.dev`). It is used by `worker.js` to build `src` and `thumb` URLs when saving new videos.
+
+R2 binding name in `worker.js` is `BUCKET` (matches `wrangler.jsonc`).
+
+## Security requirement
+
+Routes `/admin` and `/api/admin/*` **must** be protected by Cloudflare Access (Zero Trust → Access → Applications → Self-hosted). Without it, anyone can upload to / delete from R2.
+
+**Current state (configured 2026-06-11):** one self-hosted Access app (id `e65a9bc3-…`) covers both
+`cong-tay-web.thinhlt1069-xnews.workers.dev/admin` and `…/api/admin` (two `destinations`), with an
+Allow policy for `luongtuanthinh101197@gmail.com` via the One-time PIN IdP. Public read APIs
+(`/api/videos`, `/api/categories`, `/api/settings`) are intentionally left open.
+
+⚠️ **Gotcha:** the Access app `domain`/`destinations` must use the **full worker host**
+`cong-tay-web.thinhlt1069-xnews.workers.dev`, not the account apex `thinhlt1069-xnews.workers.dev`.
+The original app pointed at the apex (missing the `cong-tay-web.` prefix) and silently protected
+nothing — `/admin` and every write endpoint were world-writable until this was fixed.
+
+## Video categories and icon mapping
+
+Categories now live in `categories.json` (`[{name, icon}]`) on R2 — order and icons are
+editable from the admin **Danh mục** tab. The homepage reads `/api/categories` and renders
+sections in that order; any category found on a video but missing from the list is appended
+last. If `categories.json` doesn't exist yet, `worker.js` serves these eight defaults, and
+`index.html` falls back to keyword-based icons (`guessIcon`: names containing "phim" → 🎬,
+otherwise matched by country keyword):
+
+| Category | Icon |
+|---|---|
+| Còng tay Trung Quốc | 🇨🇳 |
+| Còng tay Việt Nam | 🇻🇳 |
+| Còng tay Hàn Quốc | 🇰🇷 |
+| Còng tay Thái Lan | 🇹🇭 |
+| Còng tay quốc tế | 🌍 |
+| Còng tay trong phim Việt Nam | 🎬 |
+| Còng tay trong phim Trung Quốc | 🎬 |
+| Còng tay trong phim nước ngoài | 🎬 |
+
+The same keyword fallback (`guessIcon`) lives in `worker.js` to pick an icon when a brand-new
+category is auto-registered during upload.
+
+## Known gotchas
+
+- **`.webm` files don't play on Safari/iOS** — always use `.mp4` (H.264).
+- **R2 dashboard upload limit is 300 MB** — use rclone for larger files.
+- **rclone 403 on write** — token must be "Object Read & Write", not "Read only"; also requires `no_check_bucket = true` in rclone config (Object tokens lack bucket-admin permission).
+- **`functions/` directory is ignored** — this is a Worker project (`npx wrangler deploy`), not a Pages project. The `functions/` convention only applies to Pages; adding it here does nothing.
+- **"Variables cannot be added to a Worker that only has static assets"** — means there is no `worker.js` or it isn't referenced in `wrangler.jsonc`. Bindings and vars must be declared in `wrangler.jsonc`, not via the dashboard.
+- **`wrangler dev` won't bind R2** locally without additional setup — test API routes against the deployed Worker.

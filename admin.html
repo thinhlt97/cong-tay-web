@@ -3,220 +3,776 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quản trị · CÒNG TAY</title>
+<title>Admin · CÒNG TAY</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#fafafa;--surface:#fff;--ink:#0f1012;--ink-2:#6b7180;--line:#ececef;
-    --line-2:#e0e3e8;--accent:#ff3b25;--accent-soft:#ffece8;--radius:14px;}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro",system-ui,sans-serif;
-    line-height:1.55;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:680px;margin:0 auto;padding:40px 22px 80px}
-  .top{display:flex;align-items:center;gap:11px;margin-bottom:6px}
-  .top svg{flex:0 0 auto}
-  h1{font-weight:800;font-size:24px;letter-spacing:-.02em}
-  .sub{color:var(--ink-2);font-size:14px;margin-bottom:30px}
-  a.back{color:var(--accent);text-decoration:none;font-size:14px;font-weight:600}
+:root{
+  --bg:#f4f5f7;--surface:#fff;--ink:#0f1012;--ink-2:#6b7180;--line:#e2e5ea;
+  --accent:#ff3b25;--accent-soft:#fff0ee;--accent-dark:#d42e15;
+  --green:#1a7f43;--green-bg:#e7f7ec;--radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro",system-ui,sans-serif;
+  line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
 
-  .drop{border:2px dashed var(--line-2);border-radius:var(--radius);background:var(--surface);
-    padding:42px 24px;text-align:center;cursor:pointer;transition:all .2s}
-  .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-  .drop svg{color:var(--ink-2);margin-bottom:10px}
-  .drop b{display:block;font-weight:600;font-size:16px}
-  .drop span{color:var(--ink-2);font-size:14px}
+.page{max-width:760px;margin:0 auto;padding:32px 20px 80px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.back-link{font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;
+  padding:7px 14px;border:1.5px solid var(--accent);border-radius:8px;transition:all .15s}
+.back-link:hover{background:var(--accent);color:#fff}
 
-  .panel{display:none;margin-top:24px}
-  .panel.show{display:block}
-  .row{margin-bottom:18px}
-  label{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
-  input[type=text],select,textarea{width:100%;font-family:inherit;font-size:15px;color:var(--ink);
-    background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;outline:none;
-    transition:border-color .2s,box-shadow .2s}
-  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
-  textarea{resize:vertical;min-height:74px}
-  .hint{color:var(--ink-2);font-size:12.5px;margin-top:6px}
+/* ── TABS ── */
+.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:6px;margin-bottom:22px;flex-wrap:wrap}
+.tab{flex:1;min-width:120px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+  padding:10px 12px;border:none;border-radius:8px;background:none;color:var(--ink-2);
+  transition:all .15s;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{background:var(--ink);color:#fff}
+.panel{display:none}
+.panel.active{display:block}
 
-  .thumbarea{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:start}
-  .preview{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#eee;border:1px solid var(--line-2)}
-  .preview img{width:100%;height:100%;object-fit:cover;display:block}
-  .slider{width:100%;margin-top:6px}
-  .btn-mini{display:inline-block;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
-    background:var(--ink);color:#fff;border:none;border-radius:8px;padding:9px 13px;margin-top:8px}
-  .btn-mini.alt{background:var(--surface);color:var(--ink);border:1px solid var(--line-2);margin-left:6px}
+/* ── DROP ZONE ── */
+.drop{border:2.5px dashed var(--line);border-radius:var(--radius);background:var(--surface);
+  padding:52px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop.has-file{border-style:solid;border-color:#c8cdd6;background:var(--surface);cursor:default;padding:20px 24px}
+.drop-icon{color:var(--ink-2);margin-bottom:12px;transition:color .2s}
+.drop:hover .drop-icon,.drop.over .drop-icon{color:var(--accent)}
+.drop-title{font-weight:700;font-size:17px;margin-bottom:4px}
+.drop-sub{color:var(--ink-2);font-size:13.5px}
+#fileInput{display:none}
 
-  .submit{width:100%;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;color:#fff;
-    background:var(--accent);border:none;border-radius:12px;padding:15px;margin-top:8px;transition:opacity .2s}
-  .submit:disabled{opacity:.5;cursor:not-allowed}
+.file-info{display:flex;align-items:center;gap:14px;text-align:left}
+.file-icon{flex:0 0 44px;height:44px;background:var(--accent-soft);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.file-name{font-weight:700;font-size:15px;word-break:break-all}
+.file-size{color:var(--ink-2);font-size:13px;margin-top:2px}
+.file-change{margin-left:auto;flex-shrink:0;font-size:12px;font-weight:600;color:var(--ink-2);
+  padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;
+  background:none;font-family:inherit;white-space:nowrap;transition:all .15s}
+.file-change:hover{border-color:var(--ink-2);color:var(--ink)}
 
-  .bar{height:8px;background:var(--line);border-radius:100px;overflow:hidden;margin-top:16px;display:none}
-  .bar.show{display:block}
-  .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
-  .msg{margin-top:14px;font-size:14px;padding:12px 14px;border-radius:10px;display:none}
-  .msg.show{display:block}
-  .msg.ok{background:#e7f7ec;color:#1a7f43}
-  .msg.err{background:var(--accent-soft);color:#c22a18}
-  @media(max-width:560px){.thumbarea{grid-template-columns:1fr}}
+/* ── CARD ── */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);
+  padding:22px;margin-top:16px;display:none}
+.card.show{display:block}
+.card+.card{margin-top:12px}
+.card-label{font-weight:700;font-size:13px;color:var(--ink-2);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:14px}
+
+/* ── INPUTS ── */
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-weight:600;font-size:13.5px;margin-bottom:7px}
+.field .sublabel{font-weight:400;color:var(--ink-2);font-size:12.5px}
+input[type=text],textarea,select{
+  width:100%;font-family:inherit;font-size:15px;color:var(--ink);
+  background:var(--bg);border:1.5px solid var(--line);border-radius:10px;
+  padding:11px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
+input[type=text]:focus,textarea:focus,select:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:#fff}
+textarea{resize:vertical;min-height:68px}
+select{cursor:pointer;-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%236b7180' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+
+/* ── CATEGORY CHIPS ── */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  padding:8px 14px;border-radius:100px;border:1.5px solid var(--line);
+  background:var(--bg);color:var(--ink-2);transition:all .15s;white-space:nowrap}
+.chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ── THUMBNAIL ── */
+.thumb-wrap{display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start}
+.thumb-preview{aspect-ratio:16/9;border-radius:10px;overflow:hidden;
+  background:#e8eaed;border:1px solid var(--line);position:relative}
+.thumb-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb-preview .no-thumb{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;color:var(--ink-2)}
+.thumb-controls{display:flex;flex-direction:column;gap:8px}
+.hint{color:var(--ink-2);font-size:12.5px}
+input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointer}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-sm{font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;border-radius:8px;
+  padding:8px 13px;transition:all .15s;white-space:nowrap}
+.btn-sm.dark{background:var(--ink);color:#fff;border:none}
+.btn-sm.dark:hover{background:#2a2d35}
+.btn-sm.light{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn-sm.light:hover{border-color:var(--ink-2)}
+
+/* ── SUBMIT ── */
+.submit-wrap{margin-top:16px}
+.submit{width:100%;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;
+  color:#fff;background:var(--accent);border:none;border-radius:12px;padding:15px;
+  transition:background .2s,opacity .2s}
+.submit:hover:not(:disabled){background:var(--accent-dark)}
+.submit:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── PROGRESS ── */
+.progress-area{display:none;margin-top:20px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.progress-area.show{display:block}
+.progress-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.progress-label{font-weight:700;font-size:15px}
+.progress-pct{font-weight:800;font-size:22px;color:var(--accent)}
+.progress-bar{height:8px;background:var(--line);border-radius:100px;overflow:hidden;margin-bottom:10px}
+.progress-bar i{display:block;height:100%;width:0;background:var(--accent);
+  border-radius:100px;transition:width .3s ease}
+.progress-meta{display:flex;gap:18px;font-size:13px;color:var(--ink-2)}
+.progress-meta b{color:var(--ink);font-weight:600}
+
+/* ── MESSAGE ── */
+.msg{margin-top:14px;font-size:14px;padding:13px 16px;border-radius:10px;display:none;line-height:1.5}
+.msg.show{display:block}
+.msg.ok{background:var(--green-bg);color:var(--green)}
+.msg.err{background:var(--accent-soft);color:#c22a18}
+
+/* ── MANAGE / SORTABLE LISTS ── */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.toolbar .count{font-size:13px;color:var(--ink-2);font-weight:600}
+.toolbar .search{flex:1;min-width:160px}
+.toolbar input[type=text]{padding:9px 13px;font-size:14px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;gap:12px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;padding:12px;transition:box-shadow .15s,opacity .15s}
+.item.dragging{opacity:.5;box-shadow:0 10px 24px -10px rgba(0,0,0,.3)}
+.handle{flex:0 0 auto;cursor:grab;color:#b8bdc8;font-size:20px;line-height:1;
+  padding:4px 2px;user-select:none;align-self:center}
+.handle:active{cursor:grabbing}
+.vthumb{flex:0 0 92px;width:92px;aspect-ratio:16/9;border-radius:8px;object-fit:cover;
+  background:#e8eaed;display:block}
+.vthumb.empty{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--ink-2)}
+.vfields{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.vfields input,.vfields select,.vfields textarea{padding:9px 12px;font-size:14px}
+.vfields textarea{min-height:46px}
+.vrow2{display:flex;gap:8px}
+.vrow2 .vcat{flex:1}
+.vrow2 .vdur{flex:0 0 92px;width:92px;text-align:center}
+.actions{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;align-self:stretch}
+.icon-btn{width:30px;height:28px;border:1.5px solid var(--line);background:var(--surface);
+  border-radius:7px;cursor:pointer;font-size:13px;color:var(--ink-2);font-family:inherit;
+  display:flex;align-items:center;justify-content:center;transition:all .15s}
+.icon-btn:hover{border-color:var(--ink-2);color:var(--ink)}
+.icon-btn.del:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+/* category rows */
+.crow{align-items:center}
+.crow .cicon{flex:0 0 56px;width:56px;text-align:center;font-size:20px;padding:9px 6px}
+.crow .cname{flex:1;padding:9px 12px;font-size:14px}
+
+.add-btn{margin-top:12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+  color:var(--ink);background:var(--surface);border:1.5px dashed var(--line);border-radius:10px;
+  padding:12px;width:100%;transition:all .15s}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+.save-bar{position:sticky;bottom:0;margin-top:18px;padding-top:14px}
+.save-bar .submit{box-shadow:0 -8px 20px -12px rgba(0,0,0,.25)}
+.empty-state{text-align:center;color:var(--ink-2);padding:40px 20px;font-size:15px}
+
+@media(max-width:560px){
+  .thumb-wrap{grid-template-columns:1fr}
+  .progress-pct{font-size:18px}
+  .vthumb{flex-basis:72px;width:72px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
-      <circle cx="15" cy="30" r="10" stroke="#ff3b25" stroke-width="2.6"/>
-      <circle cx="33" cy="30" r="10" stroke="#0f1012" stroke-width="2.6"/>
-      <path d="M19 12h10" stroke="#ff3b25" stroke-width="2.6" stroke-linecap="round"/>
-      <path d="M15 20v-4a4 4 0 0 1 4-4M33 20v-4a4 4 0 0 0-4-4" stroke="#0f1012" stroke-width="2.6" stroke-linecap="round"/>
-    </svg>
-    <h1>Đăng video</h1>
-  </div>
-  <p class="sub">Trang quản trị · <a class="back" href="/">← Về trang chủ</a></p>
-
-  <!-- KÉO THẢ -->
-  <div class="drop" id="drop">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-      <path d="M12 16V4m0 0L8 8m4-4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round"/>
-    </svg>
-    <b>Kéo video vào đây</b>
-    <span>hoặc bấm để chọn file (.mp4 khuyến nghị)</span>
-    <input type="file" id="file" accept="video/*" hidden>
+<div class="page">
+  <div class="header">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+        <circle cx="15" cy="30" r="10" stroke="#ff3b25" stroke-width="2.6"/>
+        <circle cx="33" cy="30" r="10" stroke="#0f1012" stroke-width="2.6"/>
+        <path d="M19 12h10" stroke="#ff3b25" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M15 20v-4a4 4 0 0 1 4-4M33 20v-4a4 4 0 0 0-4-4" stroke="#0f1012" stroke-width="2.6" stroke-linecap="round"/>
+      </svg>
+      <h1>Quản trị</h1>
+    </div>
+    <a class="back-link" href="/">← Trang chủ</a>
   </div>
 
-  <!-- FORM -->
-  <div class="panel" id="panel">
-    <div class="row">
-      <label>Tiêu đề</label>
-      <input type="text" id="title" placeholder="Tên video">
-    </div>
-    <div class="row">
-      <label>Danh mục</label>
-      <select id="category"></select>
-    </div>
-    <div class="row">
-      <label>Mô tả (tùy chọn)</label>
-      <textarea id="desc" placeholder="Mô tả ngắn..."></textarea>
-    </div>
-    <div class="row">
-      <label>Ảnh đại diện (thumbnail)</label>
-      <div class="thumbarea">
-        <div class="preview"><img id="thumbImg" alt=""></div>
+  <!-- TAB BAR -->
+  <div class="tabs">
+    <button class="tab active" data-tab="upload">Đăng video</button>
+    <button class="tab" data-tab="manage">Quản lý video</button>
+    <button class="tab" data-tab="cats">Danh mục</button>
+    <button class="tab" data-tab="site">Trang chủ</button>
+  </div>
+
+  <!-- ════════ TAB: UPLOAD ════════ -->
+  <div class="panel active" id="panel-upload">
+    <div class="drop" id="drop">
+      <div id="dropEmpty">
+        <div class="drop-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 15V3m0 0L8 7m4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="drop-title">Kéo video vào đây</div>
+        <div class="drop-sub">hoặc bấm để chọn · MP4 khuyến nghị · mọi kích thước</div>
+      </div>
+      <div id="dropFilled" style="display:none" class="file-info">
+        <div class="file-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/>
+            <path d="M14 2v5h5"/>
+            <path d="m10 11 5 3-5 3V11z" fill="currentColor"/>
+          </svg>
+        </div>
         <div>
-          <input type="range" id="slider" class="slider" min="0" max="100" value="0" step="1">
-          <div class="hint">Kéo thanh trượt để chọn khung hình, hoặc tải ảnh riêng.</div>
-          <button class="btn-mini" id="capBtn" type="button">Dùng khung hình này</button>
-          <button class="btn-mini alt" id="upBtn" type="button">Tải ảnh riêng</button>
-          <input type="file" id="thumbFile" accept="image/*" hidden>
+          <div class="file-name" id="fileNameDisplay"></div>
+          <div class="file-size" id="fileSizeDisplay"></div>
+        </div>
+        <button class="file-change" id="changeBtn" type="button">Đổi file</button>
+      </div>
+      <input type="file" id="fileInput" accept="video/*">
+    </div>
+
+    <div class="card" id="cardMeta">
+      <div class="card-label">Thông tin video</div>
+      <div class="field">
+        <label>Tiêu đề</label>
+        <input type="text" id="title" placeholder="Nhập tiêu đề…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Mô tả (tuỳ chọn)</label>
+        <textarea id="desc" placeholder="Mô tả ngắn…"></textarea>
+      </div>
+      <div class="field">
+        <label>Thời lượng</label>
+        <input type="text" id="duration" placeholder="vd: 4:12" style="max-width:120px">
+      </div>
+    </div>
+
+    <div class="card" id="cardCat">
+      <div class="card-label">Danh mục</div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="card" id="cardThumb">
+      <div class="card-label">Ảnh đại diện</div>
+      <div class="thumb-wrap">
+        <div class="thumb-preview" id="thumbPreview">
+          <div class="no-thumb" id="noThumb">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="m21 15-5-5L5 21"/>
+            </svg>
+          </div>
+          <img id="thumbImg" alt="" style="display:none">
+        </div>
+        <div class="thumb-controls">
+          <div class="hint">Kéo để chọn khung hình</div>
+          <input type="range" id="slider" min="0" max="100" value="5" step="1">
+          <div class="btn-row">
+            <button class="btn-sm dark" id="capBtn" type="button">Dùng khung này</button>
+            <button class="btn-sm light" id="upThumbBtn" type="button">Tải ảnh riêng</button>
+          </div>
+          <input type="file" id="thumbFile" accept="image/*" style="display:none">
         </div>
       </div>
     </div>
-    <div class="row">
-      <label>Thời lượng</label>
-      <input type="text" id="duration" placeholder="vd: 4:12">
+
+    <div class="submit-wrap" id="submitWrap" style="display:none">
+      <button class="submit" id="submitBtn">Đăng video</button>
     </div>
-    <button class="submit" id="submit">Đăng video</button>
-    <div class="bar" id="bar"><i id="barFill"></i></div>
+
+    <div class="progress-area" id="progressArea">
+      <div class="progress-header">
+        <span class="progress-label" id="progressLabel">Đang tải lên…</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar"><i id="progressFill"></i></div>
+      <div class="progress-meta">
+        <div><b id="progressSpeed">—</b> MB/s</div>
+        <div>Còn khoảng <b id="progressEta">—</b></div>
+        <div id="progressChunk"></div>
+      </div>
+    </div>
+
     <div class="msg" id="msg"></div>
+  </div>
+
+  <!-- ════════ TAB: MANAGE VIDEOS ════════ -->
+  <div class="panel" id="panel-manage">
+    <div class="toolbar">
+      <span class="count" id="vCount">—</span>
+      <div class="search"><input type="text" id="vSearch" placeholder="Lọc theo tiêu đề / danh mục…"></div>
+    </div>
+    <div class="list" id="vList"></div>
+    <div class="save-bar">
+      <button class="submit" id="saveVideos">Lưu thay đổi</button>
+    </div>
+    <div class="msg" id="vMsg"></div>
+  </div>
+
+  <!-- ════════ TAB: CATEGORIES ════════ -->
+  <div class="panel" id="panel-cats">
+    <div class="toolbar">
+      <span class="count">Kéo ⠿ để đổi thứ tự · ô đầu là icon (emoji)</span>
+    </div>
+    <div class="list" id="cList"></div>
+    <button class="add-btn" id="addCat">+ Thêm danh mục</button>
+    <div class="save-bar">
+      <button class="submit" id="saveCats">Lưu danh mục</button>
+    </div>
+    <div class="msg" id="cMsg"></div>
+  </div>
+
+  <!-- ════════ TAB: SITE SETTINGS ════════ -->
+  <div class="panel" id="panel-site">
+    <div class="card show">
+      <div class="card-label">Văn bản trang chủ</div>
+      <div class="field">
+        <label>Tên website <span class="sublabel">(hiển thị ở logo và tiêu đề lớn)</span></label>
+        <input type="text" id="setTitle" placeholder="CÒNG TAY">
+      </div>
+      <div class="field">
+        <label>Dòng nhỏ phía trên tiêu đề</label>
+        <input type="text" id="setKicker" placeholder="Tuyển tập video">
+      </div>
+      <div class="field">
+        <label>Mô tả dưới tiêu đề</label>
+        <textarea id="setSubtitle" placeholder="Bộ sưu tập video giải trí…"></textarea>
+      </div>
+      <div class="field">
+        <label>Chân trang (footer) <span class="sublabel">(năm © tự thêm)</span></label>
+        <input type="text" id="setFooter" placeholder="CÒNG TAY — Tuyển tập video giải trí.">
+      </div>
+    </div>
+    <div class="save-bar">
+      <button class="submit" id="saveSite">Lưu trang chủ</button>
+    </div>
+    <div class="msg" id="sMsg"></div>
   </div>
 </div>
 
-<video id="vid" style="display:none" muted playsinline></video>
+<video id="vid" style="display:none" muted playsinline crossorigin="anonymous"></video>
 <canvas id="canvas" style="display:none"></canvas>
 
 <script>
-const CATS = ["Còng tay Trung Quốc","Còng tay Việt Nam","Còng tay Hàn Quốc","Còng tay Thái Lan",
-  "Còng tay quốc tế","Còng tay trong phim Việt Nam","Còng tay trong phim Trung Quốc","Còng tay trong phim nước ngoài"];
-const CHUNK = 50 * 1024 * 1024; // 50MB mỗi phần
+const CHUNK = 50 * 1024 * 1024;
+const $=id=>document.getElementById(id);
 
-const $ = id => document.getElementById(id);
-const drop=$("drop"),fileIn=$("file"),panel=$("panel"),vid=$("vid"),canvas=$("canvas"),
-      thumbImg=$("thumbImg"),slider=$("slider"),msg=$("msg"),bar=$("bar"),barFill=$("barFill"),submit=$("submit");
-let videoFile=null, thumbData="", customThumb=false;
+// ── Trạng thái dữ liệu (đồng bộ với R2) ──
+const state = { categories: [], videos: [], settings: {} };
 
-CATS.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;$("category").appendChild(o);});
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>(
+  {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function showMsgIn(el,text,ok){el.textContent=text;el.className="msg show "+(ok?"ok":"err");
+  if(ok)setTimeout(()=>el.classList.remove("show"),4000);}
 
-function slug(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D')
-  .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||"video";}
-function fmt(t){t=Math.round(t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
+// ── Tải toàn bộ dữ liệu ──
+async function loadData(){
+  const [cats,vids,sett]=await Promise.all([
+    fetch("/api/categories?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).catch(()=>[]),
+    fetch("/api/videos?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).catch(()=>[]),
+    fetch("/api/settings?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).catch(()=>({})),
+  ]);
+  state.categories=Array.isArray(cats)?cats:[];
+  state.videos=Array.isArray(vids)?vids:[];
+  state.settings=sett&&typeof sett==="object"?sett:{};
+  renderUploadCats(); renderManage(); renderCats(); renderSite();
+}
+
+// ════════ TAB SWITCHING ════════
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    $("panel-"+t.dataset.tab).classList.add("active");
+  };
+});
+
+// ════════ SORTABLE (kéo-thả bằng handle + nút ▲▼) ════════
+function makeSortable(container){
+  let dragEl=null;
+  container.addEventListener("mousedown",e=>{
+    const h=e.target.closest(".handle"); if(!h)return;
+    const it=h.closest("[data-sortable]"); if(it)it.draggable=true;
+  });
+  const clearDraggable=()=>container.querySelectorAll("[data-sortable]").forEach(i=>i.draggable=false);
+  container.addEventListener("mouseup",clearDraggable);
+  container.addEventListener("dragstart",e=>{
+    const it=e.target.closest("[data-sortable]"); if(!it)return;
+    dragEl=it; it.classList.add("dragging"); e.dataTransfer.effectAllowed="move";
+  });
+  container.addEventListener("dragend",()=>{
+    if(dragEl)dragEl.classList.remove("dragging"); dragEl=null; clearDraggable();
+  });
+  container.addEventListener("dragover",e=>{
+    if(!dragEl)return; e.preventDefault();
+    const after=afterEl(container,e.clientY);
+    if(after==null)container.appendChild(dragEl);
+    else container.insertBefore(dragEl,after);
+  });
+  // nút ▲ ▼ 🗑 + reset draggable sau khi thả
+  container.addEventListener("click",e=>{
+    const it=e.target.closest("[data-sortable]"); if(!it)return;
+    if(e.target.closest(".up")){const p=it.previousElementSibling;if(p)container.insertBefore(it,p);}
+    else if(e.target.closest(".down")){const n=it.nextElementSibling;if(n)container.insertBefore(n,it);}
+    else if(e.target.closest(".del")){it.remove();}
+  });
+}
+function afterEl(container,y){
+  const els=[...container.querySelectorAll("[data-sortable]:not(.dragging)")];
+  let res=null,min=-Infinity;
+  for(const c of els){const b=c.getBoundingClientRect();const off=y-b.top-b.height/2;
+    if(off<0&&off>min){min=off;res=c;}}
+  return res;
+}
+const actionsHTML=`<div class="actions">
+  <button type="button" class="icon-btn up" title="Lên">▲</button>
+  <button type="button" class="icon-btn down" title="Xuống">▼</button>
+  <button type="button" class="icon-btn del" title="Xóa">🗑</button></div>`;
+
+// ════════ TAB: MANAGE VIDEOS ════════
+function catOptions(selected){
+  const names=state.categories.map(c=>c.name);
+  if(selected&&!names.includes(selected))names.unshift(selected);
+  return names.map(n=>`<option value="${esc(n)}"${n===selected?" selected":""}>${esc(n)}</option>`).join("");
+}
+function renderManage(){
+  const list=$("vList");
+  if(!state.videos.length){list.innerHTML=`<div class="empty-state">Chưa có video nào.</div>`;$("vCount").textContent="0 video";return;}
+  $("vCount").textContent=state.videos.length+" video";
+  list.innerHTML=state.videos.map(v=>{
+    const thumb=v.thumb
+      ? `<img class="vthumb" src="${esc(v.thumb)}" alt="">`
+      : `<div class="vthumb empty">🔒</div>`;
+    return `<div class="item" data-sortable draggable="false"
+        data-src="${esc(v.src)}" data-thumb="${esc(v.thumb)}" data-type="${esc(v.type||'file')}">
+      <div class="handle">⠿</div>
+      ${thumb}
+      <div class="vfields">
+        <input type="text" class="vtitle" value="${esc(v.title)}" placeholder="Tiêu đề">
+        <div class="vrow2">
+          <select class="vcat">${catOptions(v.category)}</select>
+          <input type="text" class="vdur" value="${esc(v.duration)}" placeholder="4:12">
+        </div>
+        <textarea class="vdesc" placeholder="Mô tả (tuỳ chọn)">${esc(v.desc)}</textarea>
+      </div>
+      ${actionsHTML}
+    </div>`;
+  }).join("");
+}
+$("vSearch").oninput=e=>{
+  const q=e.target.value.toLowerCase().trim();
+  $("vList").querySelectorAll(".item").forEach(it=>{
+    const t=(it.querySelector(".vtitle").value+" "+it.querySelector(".vcat").value).toLowerCase();
+    it.style.display=!q||t.includes(q)?"":"none";
+  });
+};
+$("saveVideos").onclick=async()=>{
+  const rows=[...$("vList").querySelectorAll(".item")];
+  const out=rows.map(it=>({
+    title:it.querySelector(".vtitle").value.trim(),
+    desc:it.querySelector(".vdesc").value,
+    category:it.querySelector(".vcat").value,
+    duration:it.querySelector(".vdur").value.trim(),
+    type:it.dataset.type||"file",
+    src:it.dataset.src,
+    thumb:it.dataset.thumb,
+  }));
+  const bad=out.find(v=>!v.title||!v.category);
+  if(bad){showMsgIn($("vMsg"),"Mỗi video cần có tiêu đề và danh mục.",false);return;}
+  const btn=$("saveVideos");btn.disabled=true;btn.textContent="Đang lưu…";
+  try{
+    await putJSON("/api/admin/videos",out);
+    state.videos=out;
+    showMsgIn($("vMsg"),"Đã lưu "+out.length+" video.",true);
+  }catch(err){showMsgIn($("vMsg"),"Lỗi: "+err.message,false);}
+  btn.disabled=false;btn.textContent="Lưu thay đổi";
+};
+makeSortable($("vList"));
+
+// ════════ TAB: CATEGORIES ════════
+function catRowHTML(c){
+  return `<div class="item crow" data-sortable draggable="false">
+    <div class="handle">⠿</div>
+    <input type="text" class="cicon" value="${esc(c.icon||'')}" maxlength="4" placeholder="🔒">
+    <input type="text" class="cname" value="${esc(c.name||'')}" placeholder="Tên danh mục">
+    ${actionsHTML}
+  </div>`;
+}
+function renderCats(){
+  $("cList").innerHTML=state.categories.map(catRowHTML).join("");
+}
+$("addCat").onclick=()=>{
+  const wrap=document.createElement("div");
+  wrap.innerHTML=catRowHTML({icon:"🔒",name:""});
+  $("cList").appendChild(wrap.firstElementChild);
+  $("cList").lastElementChild.querySelector(".cname").focus();
+};
+$("saveCats").onclick=async()=>{
+  const rows=[...$("cList").querySelectorAll(".item")];
+  const out=[];const names=new Set();
+  for(const it of rows){
+    const name=it.querySelector(".cname").value.trim();
+    const icon=it.querySelector(".cicon").value.trim();
+    if(!name)continue;
+    if(names.has(name)){showMsgIn($("cMsg"),'Danh mục trùng tên: "'+name+'".',false);return;}
+    names.add(name);out.push({name,icon:icon||"🔒"});
+  }
+  if(!out.length){showMsgIn($("cMsg"),"Cần ít nhất một danh mục.",false);return;}
+  const btn=$("saveCats");btn.disabled=true;btn.textContent="Đang lưu…";
+  try{
+    await putJSON("/api/admin/categories",out);
+    state.categories=out;
+    renderUploadCats();renderManage();
+    showMsgIn($("cMsg"),"Đã lưu "+out.length+" danh mục.",true);
+  }catch(err){showMsgIn($("cMsg"),"Lỗi: "+err.message,false);}
+  btn.disabled=false;btn.textContent="Lưu danh mục";
+};
+makeSortable($("cList"));
+
+// ════════ TAB: SITE SETTINGS ════════
+function renderSite(){
+  const s=state.settings||{};
+  $("setTitle").value=s.siteTitle||"";
+  $("setKicker").value=s.heroKicker||"";
+  $("setSubtitle").value=s.heroSubtitle||"";
+  $("setFooter").value=s.footer||"";
+}
+$("saveSite").onclick=async()=>{
+  const body={
+    siteTitle:$("setTitle").value.trim(),
+    heroKicker:$("setKicker").value.trim(),
+    heroSubtitle:$("setSubtitle").value.trim(),
+    footer:$("setFooter").value.trim(),
+  };
+  if(!body.siteTitle){showMsgIn($("sMsg"),"Hãy nhập tên website.",false);return;}
+  const btn=$("saveSite");btn.disabled=true;btn.textContent="Đang lưu…";
+  try{
+    await putJSON("/api/admin/settings",body);
+    state.settings=body;
+    showMsgIn($("sMsg"),"Đã lưu. Tải lại trang chủ để xem thay đổi.",true);
+  }catch(err){showMsgIn($("sMsg"),"Lỗi: "+err.message,false);}
+  btn.disabled=false;btn.textContent="Lưu trang chủ";
+};
+
+// ════════ HELPER: PUT JSON ════════
+async function putJSON(url,data){
+  const r=await fetch(url,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||j.error)throw new Error(j.error||"HTTP "+r.status);
+  return j;
+}
+async function postJSON(url,data){
+  const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
+  const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||"HTTP "+r.status);return j;
+}
+
+/* ════════════════════════════════════════════════════════
+   TAB: UPLOAD — luồng đăng video (giữ nguyên như trước)
+   ════════════════════════════════════════════════════════ */
+const drop=$("drop"),fileInput=$("fileInput"),vid=$("vid"),canvas=$("canvas");
+const thumbImg=$("thumbImg"),noThumb=$("noThumb"),slider=$("slider");
+const msg=$("msg"),progressArea=$("progressArea");
+let videoFile=null, thumbData="", customThumb=false, selectedCat="", uploadInProgress=false;
+
+// chips danh mục (đọc từ state.categories)
+function renderUploadCats(){
+  const wrap=$("chips");wrap.innerHTML="";
+  if(selectedCat&&!state.categories.some(c=>c.name===selectedCat))selectedCat="";
+  state.categories.forEach(c=>{
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="chip"+(c.name===selectedCat?" active":"");
+    btn.textContent=c.name;
+    btn.onclick=()=>{
+      wrap.querySelectorAll(".chip").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");selectedCat=c.name;
+    };
+    wrap.appendChild(btn);
+  });
+  if(!state.categories.length)
+    wrap.innerHTML=`<span class="hint">Chưa có danh mục — thêm ở tab “Danh mục”.</span>`;
+}
+
+function fmtSize(b){
+  if(b<1024)return b+"B";
+  if(b<1024*1024)return (b/1024).toFixed(1)+"KB";
+  if(b<1024*1024*1024)return (b/1024/1024).toFixed(1)+"MB";
+  return (b/1024/1024/1024).toFixed(2)+"GB";
+}
+function fmtTime(s){
+  if(!isFinite(s)||s<0)return "—";
+  s=Math.round(s);
+  if(s<60)return s+"s";
+  if(s<3600)return Math.floor(s/60)+"m"+String(s%60).padStart(2,"0")+"s";
+  return Math.floor(s/3600)+"h"+String(Math.floor((s%3600)/60)).padStart(2,"0")+"m";
+}
+function fmtDur(t){t=Math.round(t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
+function slug(s){
+  return s.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[đĐ]/g,m=>m==="đ"?"d":"D")
+    .toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"video";
+}
+function titleFromFilename(name){
+  return name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," ").replace(/\b\w/g,c=>c.toUpperCase()).trim();
+}
 function showMsg(text,ok){msg.textContent=text;msg.className="msg show "+(ok?"ok":"err");}
 
-/* chọn / kéo thả file */
-drop.onclick=()=>fileIn.click();
-drop.ondragover=e=>{e.preventDefault();drop.classList.add("over");};
+drop.onclick=e=>{
+  if(e.target===$("changeBtn")||$("changeBtn").contains(e.target))return;
+  if(!videoFile) fileInput.click();
+};
+$("changeBtn").onclick=e=>{e.stopPropagation();resetFile();fileInput.click();};
+drop.ondragover=e=>{e.preventDefault();if(!videoFile)drop.classList.add("over");};
 drop.ondragleave=()=>drop.classList.remove("over");
-drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);};
-fileIn.onchange=e=>{if(e.target.files[0])handleFile(e.target.files[0]);};
+drop.ondrop=e=>{
+  e.preventDefault();drop.classList.remove("over");
+  if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);
+};
+fileInput.onchange=e=>{if(e.target.files[0])handleFile(e.target.files[0]);};
+
+function resetFile(){
+  videoFile=null;thumbData="";customThumb=false;
+  drop.classList.remove("has-file");
+  $("dropEmpty").style.display="";
+  $("dropFilled").style.display="none";
+  ["cardMeta","cardCat","cardThumb","submitWrap"].forEach(id=>$(id).style.display="none");
+  ["cardMeta","cardCat","cardThumb"].forEach(id=>$(id).classList.remove("show"));
+  thumbImg.style.display="none";noThumb.style.display="";
+  progressArea.classList.remove("show");
+  msg.classList.remove("show");
+}
 
 function handleFile(f){
   if(!f.type.startsWith("video/")){showMsg("Vui lòng chọn file video.",false);return;}
-  videoFile=f;customThumb=false;
-  panel.classList.add("show");
-  drop.querySelector("b").textContent=f.name;
+  videoFile=f; customThumb=false;
+  drop.classList.add("has-file");
+  $("dropEmpty").style.display="none";
+  $("dropFilled").style.display="";
+  $("fileNameDisplay").textContent=f.name;
+  $("fileSizeDisplay").textContent=fmtSize(f.size)+" · "+f.type;
+  $("title").value=titleFromFilename(f.name);
+  ["cardMeta","cardCat","cardThumb"].forEach(id=>{$(id).style.display="block";$(id).classList.add("show");});
+  $("submitWrap").style.display="block";
+  msg.classList.remove("show");
   vid.src=URL.createObjectURL(f);
   vid.onloadedmetadata=()=>{
-    $("duration").value=fmt(vid.duration);
-    slider.max=Math.floor(vid.duration);
-    const start=Math.min(3,vid.duration/2);
-    slider.value=Math.floor(start);
-    vid.currentTime=start;
+    $("duration").value=fmtDur(vid.duration);
+    slider.max=Math.max(1,Math.floor(vid.duration)-1);
+    const t=Math.min(5,vid.duration*0.1);
+    slider.value=Math.floor(t);
+    vid.currentTime=Math.floor(t);
   };
-  vid.onseeked=()=>{ if(!customThumb) capture(); };
+  vid.onseeked=()=>{if(!customThumb)capture();};
 }
 
 function capture(){
+  if(!vid.videoWidth)return;
   const w=640,h=Math.round(640*vid.videoHeight/vid.videoWidth)||360;
   canvas.width=w;canvas.height=h;
   canvas.getContext("2d").drawImage(vid,0,0,w,h);
-  thumbData=canvas.toDataURL("image/jpeg",0.82);
-  thumbImg.src=thumbData;
+  thumbData=canvas.toDataURL("image/jpeg",.83);
+  thumbImg.src=thumbData; thumbImg.style.display="block"; noThumb.style.display="none";
 }
 slider.oninput=()=>{customThumb=false;vid.currentTime=+slider.value;};
 $("capBtn").onclick=()=>{customThumb=false;capture();};
-$("upBtn").onclick=()=>$("thumbFile").click();
-$("thumbFile").onchange=e=>{const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();r.onload=()=>{thumbData=r.result;thumbImg.src=thumbData;customThumb=true;};r.readAsDataURL(f);};
+$("upThumbBtn").onclick=()=>$("thumbFile").click();
+$("thumbFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    thumbData=r.result;thumbImg.src=thumbData;
+    thumbImg.style.display="block";noThumb.style.display="none";
+    customThumb=true;
+  };
+  r.readAsDataURL(f);
+};
 
-/* đăng video */
-async function postJSON(url,data){
-  const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
-  const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||("HTTP "+r.status));return j;}
+function setProgress(pct,speed,etaSec,chunkInfo){
+  $("progressPct").textContent=Math.round(pct)+"%";
+  $("progressFill").style.width=pct+"%";
+  $("progressSpeed").textContent=speed!=null?speed.toFixed(1):"—";
+  $("progressEta").textContent=etaSec!=null?fmtTime(etaSec):"—";
+  if(chunkInfo)$("progressChunk").textContent=chunkInfo;
+}
 
-submit.onclick=async()=>{
-  const title=$("title").value.trim(), category=$("category").value,
-        desc=$("desc").value.trim(), duration=$("duration").value.trim();
+$("submitBtn").onclick=async()=>{
+  if(uploadInProgress)return;
+  const title=$("title").value.trim(), desc=$("desc").value.trim(), duration=$("duration").value.trim();
   if(!videoFile){showMsg("Chưa chọn video.",false);return;}
   if(!title){showMsg("Hãy nhập tiêu đề.",false);return;}
-  submit.disabled=true;bar.classList.add("show");msg.classList.remove("show");
+  if(!selectedCat){showMsg("Hãy chọn danh mục.",false);return;}
+  uploadInProgress=true;
+  $("submitBtn").disabled=true;
+  progressArea.classList.add("show");
+  msg.classList.remove("show");
+  $("progressLabel").textContent="Đang tải lên…";
+  setProgress(0,null,null,"");
+
   try{
     const ext=(videoFile.name.match(/\.[^.]+$/)||[".mp4"])[0].toLowerCase();
     const key=slug(title)+"-"+Date.now()+ext;
-    // 1) bắt đầu multipart
+    const totalSize=videoFile.size;
+    const totalParts=Math.ceil(totalSize/CHUNK);
+
     const {uploadId}=await postJSON("/api/admin/upload?action=start",{key,contentType:videoFile.type});
-    // 2) tải từng phần
-    const parts=[];let part=1;
-    for(let off=0;off<videoFile.size;off+=CHUNK){
-      const blob=videoFile.slice(off,off+CHUNK);
-      const r=await fetch(`/api/admin/upload?action=part&key=${encodeURIComponent(key)}&uploadId=${encodeURIComponent(uploadId)}&part=${part}`,
-        {method:"POST",body:blob});
-      const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||"Lỗi tải phần "+part);
-      parts.push({partNumber:part,etag:j.etag});part++;
-      barFill.style.width=Math.min(100,Math.round((off+CHUNK)/videoFile.size*92))+"%";
+
+    const parts=[];
+    let uploadedBytes=0, startTime=Date.now();
+
+    for(let i=0;i<totalParts;i++){
+      const off=i*CHUNK;
+      const blob=videoFile.slice(off,Math.min(off+CHUNK,totalSize));
+      const r=await fetch(
+        `/api/admin/upload?action=part&key=${encodeURIComponent(key)}&uploadId=${encodeURIComponent(uploadId)}&part=${i+1}`,
+        {method:"POST",body:blob}
+      );
+      const j=await r.json();
+      if(!r.ok||j.error)throw new Error(j.error||"Lỗi phần "+(i+1));
+      parts.push({partNumber:i+1,etag:j.etag});
+      uploadedBytes=Math.min(off+CHUNK,totalSize);
+
+      const elapsed=(Date.now()-startTime)/1000;
+      const speedMBs=elapsed>0?(uploadedBytes/1024/1024)/elapsed:0;
+      const remaining=totalSize-uploadedBytes;
+      const eta=speedMBs>0?(remaining/1024/1024)/speedMBs:null;
+      const pct=(uploadedBytes/totalSize)*92;
+      setProgress(pct,speedMBs,eta,`Phần ${i+1}/${totalParts}`);
     }
-    // 3) hoàn tất
+
+    $("progressLabel").textContent="Hoàn tất multipart…";
+    setProgress(94,null,null,"");
     await postJSON("/api/admin/upload?action=complete",{key,uploadId,parts});
-    barFill.style.width="96%";
-    // 4) lưu metadata + thumbnail
+
+    $("progressLabel").textContent="Lưu thông tin…";
+    setProgress(97,null,null,"");
     const thumbBase64=thumbData?thumbData.split(",")[1]:"";
-    await postJSON("/api/admin/save",{title,category,desc,duration,videoKey:key,thumbBase64});
-    barFill.style.width="100%";
+    await postJSON("/api/admin/save",{title,category:selectedCat,desc,duration,videoKey:key,thumbBase64});
+
+    setProgress(100,null,null,"");
+    $("progressLabel").textContent="Hoàn thành!";
     showMsg("Đăng thành công! Video đã xuất hiện trên trang chủ.",true);
-    setTimeout(()=>{location.reload();},1600);
+    setTimeout(async()=>{
+      uploadInProgress=false;
+      $("submitBtn").disabled=false;
+      resetFile();
+      progressArea.classList.remove("show");
+      await loadData(); // làm mới danh sách quản lý
+    },2500);
   }catch(e){
     showMsg("Lỗi: "+e.message,false);
-    submit.disabled=false;
+    $("progressLabel").textContent="Lỗi tải lên";
+    uploadInProgress=false;
+    $("submitBtn").disabled=false;
   }
 };
+
+// ── Khởi động ──
+loadData();
 </script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+.git
+.claude
+.wrangler
+node_modules
+functions
+worker.js
+wrangler.jsonc
+.assetsignore
+videos.json
+categories.json
+settings.json
+HANDOFF.md
+CLAUDE.md
