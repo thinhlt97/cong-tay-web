@@ -51,6 +51,8 @@ Browser
   ├─ POST /api/admin/upload      → worker.js multipart upload to R2
   ├─ POST /api/admin/save        → worker.js saves thumbnail + prepends to videos.json
   │                                 (also auto-registers a new category in categories.json)
+  ├─ POST /api/admin/thumb       → worker.js uploads one JPEG to R2, returns its public URL
+  │                                 (used to change the thumbnail of an existing video)
   ├─ PUT  /api/admin/videos      → worker.js replaces videos.json (edit/delete/reorder)
   ├─ PUT  /api/admin/categories  → worker.js replaces categories.json
   └─ PUT  /api/admin/settings    → worker.js replaces settings.json
@@ -63,7 +65,7 @@ R2 bucket "handcuff": video files (.mp4), thumbnails (.jpg), videos.json,
 
 **Admin page (`admin.html`) is a 4-tab management UI:**
 - **Đăng video** — the drag-and-drop upload flow (unchanged).
-- **Quản lý video** — list/edit/delete/reorder all videos; saves the whole list via `PUT /api/admin/videos`. Array order = display order on the homepage (within each category).
+- **Quản lý video** — list/edit/delete/reorder all videos; saves the whole list via `PUT /api/admin/videos`. Array order = display order on the homepage (within each category). Each row has a **"Đổi ảnh"** button that opens a thumbnail editor: it loads the existing video (cross-origin from `pub-*.r2.dev`) into a `<video>`, scrubs frames, captures one via canvas, and uploads it through `POST /api/admin/thumb` on save (under a new cache-busting key). Custom image upload is also offered.
 - **Danh mục** — add/rename/delete/reorder categories + custom emoji icon; saves via `PUT /api/admin/categories`.
 - **Trang chủ** — edit homepage texts (site title, kicker, subtitle, footer); saves via `PUT /api/admin/settings`.
 
@@ -123,6 +125,7 @@ category is auto-registered during upload.
 ## Known gotchas
 
 - **`.webm` files don't play on Safari/iOS** — always use `.mp4` (H.264).
+- **Thumbnail frame-capture needs R2 CORS** — capturing a frame from an already-published video in the admin "Quản lý video" tab loads it cross-origin from `pub-*.r2.dev`; without a CORS rule (`AllowedOrigins: *`, `GET`/`HEAD`) on the `handcuff` bucket the canvas becomes tainted and `toDataURL()` throws. The bucket CORS policy is already configured for this.
 - **R2 dashboard upload limit is 300 MB** — use rclone for larger files.
 - **rclone 403 on write** — token must be "Object Read & Write", not "Read only"; also requires `no_check_bucket = true` in rclone config (Object tokens lack bucket-admin permission).
 - **`functions/` directory is ignored** — this is a Worker project (`npx wrangler deploy`), not a Pages project. The `functions/` convention only applies to Pages; adding it here does nothing.

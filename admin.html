@@ -167,6 +167,33 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
 .crow .cicon{flex:0 0 56px;width:56px;text-align:center;font-size:20px;padding:9px 6px}
 .crow .cname{flex:1;padding:9px 12px;font-size:14px}
 
+/* thumbnail cell + nút đổi ảnh trong tab quản lý */
+.vthumb-cell{flex:0 0 92px;width:92px;display:flex;flex-direction:column;gap:5px}
+.vthumb-cell .vthumb{width:92px;flex:none}
+.thumb-edit{font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--line);background:var(--surface);color:var(--ink-2);
+  border-radius:7px;padding:5px;transition:all .15s}
+.thumb-edit:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+/* ── MODAL CHỈNH THUMBNAIL ── */
+.tmodal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  padding:20px;background:rgba(15,16,18,.55);backdrop-filter:blur(4px)}
+.tmodal.open{display:flex}
+.tbox{width:100%;max-width:560px;background:var(--surface);border-radius:16px;overflow:hidden;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.5)}
+.tbox-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;
+  border-bottom:1px solid var(--line);font-weight:700;font-size:16px}
+.tclose{width:34px;height:34px;border:none;background:var(--bg);border-radius:50%;cursor:pointer;
+  font-size:20px;color:var(--ink-2);font-family:inherit;transition:all .15s}
+.tclose:hover{background:var(--accent-soft);color:var(--accent)}
+.tpreview{position:relative;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center}
+.tpreview video,.tpreview img{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+.tloading{position:absolute;color:#fff;font-size:14px;opacity:.85;text-align:center;padding:0 20px}
+.tbox input[type=range]{width:calc(100% - 36px);margin:16px 18px 0;accent-color:var(--accent);height:4px;cursor:pointer}
+.thint{color:var(--ink-2);font-size:12.5px;padding:8px 18px 0}
+.tbtns{display:flex;gap:10px;padding:16px 18px 18px}
+.tbtns .btn-sm{flex:1;text-align:center;padding:11px}
+
 .add-btn{margin-top:12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
   color:var(--ink);background:var(--surface);border:1.5px dashed var(--line);border-radius:10px;
   padding:12px;width:100%;transition:all .15s}
@@ -180,6 +207,8 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
   .thumb-wrap{grid-template-columns:1fr}
   .progress-pct{font-size:18px}
   .vthumb{flex-basis:72px;width:72px}
+  .vthumb-cell{flex-basis:72px;width:72px}
+  .vthumb-cell .vthumb{width:72px}
 }
 </style>
 </head>
@@ -356,6 +385,29 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
   </div>
 </div>
 
+<!-- MODAL: chỉnh thumbnail cho video đã đăng -->
+<div class="tmodal" id="tmodal">
+  <div class="tbox">
+    <div class="tbox-head">
+      <span>Đổi ảnh đại diện</span>
+      <button class="tclose" id="tClose" type="button" aria-label="Đóng">×</button>
+    </div>
+    <div class="tpreview" id="tPreview">
+      <video id="tvid" muted playsinline crossorigin="anonymous"></video>
+      <img id="tImg" alt="" style="display:none">
+      <div class="tloading" id="tLoading">Đang tải video…</div>
+    </div>
+    <input type="range" id="tSlider" min="0" max="100" value="0" step="1">
+    <div class="thint" id="tHint">Kéo thanh trượt để chọn khung hình</div>
+    <div class="tbtns">
+      <button class="btn-sm light" id="tUpload" type="button">Tải ảnh riêng</button>
+      <button class="btn-sm dark" id="tApply" type="button" disabled>Dùng ảnh này</button>
+    </div>
+    <input type="file" id="tFile" accept="image/*" style="display:none">
+    <canvas id="tcanvas" style="display:none"></canvas>
+  </div>
+</div>
+
 <video id="vid" style="display:none" muted playsinline crossorigin="anonymous"></video>
 <canvas id="canvas" style="display:none"></canvas>
 
@@ -453,7 +505,10 @@ function renderManage(){
     return `<div class="item" data-sortable draggable="false"
         data-src="${esc(v.src)}" data-thumb="${esc(v.thumb)}" data-type="${esc(v.type||'file')}">
       <div class="handle">⠿</div>
-      ${thumb}
+      <div class="vthumb-cell">
+        ${thumb}
+        <button type="button" class="thumb-edit">Đổi ảnh</button>
+      </div>
       <div class="vfields">
         <input type="text" class="vtitle" value="${esc(v.title)}" placeholder="Tiêu đề">
         <div class="vrow2">
@@ -473,28 +528,130 @@ $("vSearch").oninput=e=>{
     it.style.display=!q||t.includes(q)?"":"none";
   });
 };
+let thumbCounter=0;
+function thumbKeyFor(src){
+  let base="thumb";
+  try{const p=new URL(src).pathname;base=(p.split("/").pop()||"thumb").replace(/\.[^.]+$/,"")||"thumb";}catch(_){}
+  return base+"-thumb-"+Date.now()+"-"+(++thumbCounter)+".jpg";
+}
 $("saveVideos").onclick=async()=>{
   const rows=[...$("vList").querySelectorAll(".item")];
-  const out=rows.map(it=>({
-    title:it.querySelector(".vtitle").value.trim(),
-    desc:it.querySelector(".vdesc").value,
-    category:it.querySelector(".vcat").value,
-    duration:it.querySelector(".vdur").value.trim(),
-    type:it.dataset.type||"file",
-    src:it.dataset.src,
-    thumb:it.dataset.thumb,
-  }));
-  const bad=out.find(v=>!v.title||!v.category);
-  if(bad){showMsgIn($("vMsg"),"Mỗi video cần có tiêu đề và danh mục.",false);return;}
+  for(const it of rows){
+    if(!it.querySelector(".vtitle").value.trim()||!it.querySelector(".vcat").value){
+      showMsgIn($("vMsg"),"Mỗi video cần có tiêu đề và danh mục.",false);return;
+    }
+  }
   const btn=$("saveVideos");btn.disabled=true;btn.textContent="Đang lưu…";
   try{
+    const out=[];
+    for(const it of rows){
+      let thumb=it.dataset.thumb;
+      if(it._pendingThumb){
+        btn.textContent="Đang lưu ảnh…";
+        const r=await postJSON("/api/admin/thumb",
+          {key:thumbKeyFor(it.dataset.src),thumbBase64:it._pendingThumb.split(",")[1]});
+        thumb=r.thumb;
+      }
+      out.push({
+        title:it.querySelector(".vtitle").value.trim(),
+        desc:it.querySelector(".vdesc").value,
+        category:it.querySelector(".vcat").value,
+        duration:it.querySelector(".vdur").value.trim(),
+        type:it.dataset.type||"file",
+        src:it.dataset.src,
+        thumb,
+      });
+    }
     await putJSON("/api/admin/videos",out);
     state.videos=out;
+    renderManage(); // làm mới + xóa ảnh đang chờ
     showMsgIn($("vMsg"),"Đã lưu "+out.length+" video.",true);
   }catch(err){showMsgIn($("vMsg"),"Lỗi: "+err.message,false);}
   btn.disabled=false;btn.textContent="Lưu thay đổi";
 };
 makeSortable($("vList"));
+
+// mở trình chỉnh thumbnail khi bấm "Đổi ảnh"
+$("vList").addEventListener("click",e=>{
+  const b=e.target.closest(".thumb-edit"); if(!b)return;
+  openThumbEditor(b.closest(".item"));
+});
+
+// ════════ TRÌNH CHỈNH THUMBNAIL (chọn khung hình) ════════
+const tvid=$("tvid"), tcanvas=$("tcanvas"), tSlider=$("tSlider");
+let tTarget=null, tData="", tCustom=false;
+
+function openThumbEditor(row){
+  tTarget=row; tData=""; tCustom=false;
+  $("tApply").disabled=true;
+  $("tImg").style.display="none";
+  $("tLoading").style.display="";
+  $("tLoading").textContent="Đang tải video…";
+  const src=row.dataset.src, isFile=(row.dataset.type||"file")==="file"&&src;
+  tvid.style.display=isFile?"":"none";
+  tSlider.style.display=isFile?"":"none";
+  $("tHint").textContent=isFile?"Kéo thanh trượt để chọn khung hình":"Video nhúng — hãy tải ảnh riêng.";
+  if(isFile){tvid.crossOrigin="anonymous";tvid.src=src;}
+  else{tvid.removeAttribute("src");$("tLoading").style.display="none";}
+  $("tmodal").classList.add("open");
+}
+function closeThumbEditor(){
+  $("tmodal").classList.remove("open");
+  try{tvid.pause();}catch(_){}
+  tvid.removeAttribute("src");
+  try{tvid.load();}catch(_){}
+  tTarget=null;
+}
+function tCapture(){
+  if(!tvid.videoWidth)return;
+  const w=640,h=Math.round(640*tvid.videoHeight/tvid.videoWidth)||360;
+  tcanvas.width=w;tcanvas.height=h;
+  try{
+    tcanvas.getContext("2d").drawImage(tvid,0,0,w,h);
+    tData=tcanvas.toDataURL("image/jpeg",.83);
+    $("tApply").disabled=false;
+  }catch(_){
+    $("tApply").disabled=true;
+    $("tLoading").style.display="";
+    $("tLoading").textContent="Không chụp được khung hình (CORS). Hãy thử “Tải ảnh riêng”.";
+  }
+}
+tvid.onloadedmetadata=()=>{
+  $("tLoading").style.display="none";
+  tSlider.max=Math.max(1,Math.floor(tvid.duration)-1);
+  const t=Math.floor(Math.min(5,tvid.duration*0.1));
+  tSlider.value=t;tvid.currentTime=t;
+};
+tvid.onseeked=()=>{if(!tCustom)tCapture();};
+tvid.onerror=()=>{$("tLoading").style.display="";
+  $("tLoading").textContent="Không tải được video. Hãy thử “Tải ảnh riêng”.";};
+tSlider.oninput=()=>{tCustom=false;$("tImg").style.display="none";tvid.style.display="";tvid.currentTime=+tSlider.value;};
+
+$("tUpload").onclick=()=>$("tFile").click();
+$("tFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    tData=r.result;tCustom=true;
+    tvid.style.display="none";tSlider.style.display="none";$("tLoading").style.display="none";
+    $("tImg").src=tData;$("tImg").style.display="";
+    $("tApply").disabled=false;
+  };
+  r.readAsDataURL(f);
+  e.target.value="";
+};
+$("tApply").onclick=()=>{
+  if(!tData||!tTarget)return;
+  tTarget._pendingThumb=tData;
+  let img=tTarget.querySelector("img.vthumb");
+  if(!img){const old=tTarget.querySelector(".vthumb");img=document.createElement("img");img.className="vthumb";old.replaceWith(img);}
+  img.src=tData;
+  closeThumbEditor();
+  showMsgIn($("vMsg"),'Đã chọn ảnh mới — bấm "Lưu thay đổi" để áp dụng.',true);
+};
+$("tClose").onclick=closeThumbEditor;
+$("tmodal").onclick=e=>{if(e.target===$("tmodal"))closeThumbEditor();};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("tmodal").classList.contains("open"))closeThumbEditor();});
 
 // ════════ TAB: CATEGORIES ════════
 function catRowHTML(c){

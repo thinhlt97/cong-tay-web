@@ -162,6 +162,23 @@ async function handleSave(request, env) {
   }
 }
 
+// POST /api/admin/thumb -> lưu một ảnh thumbnail (JPEG) lên R2, trả về URL công khai
+async function handleThumb(request, env) {
+  const BUCKET = env.BUCKET;
+  const BASE = (env.PUBLIC_BASE || "").replace(/\/$/, "");
+  try {
+    const { key, thumbBase64 } = await request.json();
+    if (!key || !thumbBase64) return json({ error: "Thiếu key hoặc ảnh" }, 400);
+    const safeKey = String(key).replace(/^\/+/, "");
+    await BUCKET.put(safeKey, b64ToBytes(thumbBase64), {
+      httpMetadata: { contentType: "image/jpeg" },
+    });
+    return json({ ok: true, thumb: `${BASE}/${safeKey}` });
+  } catch (e) {
+    return json({ error: String((e && e.message) || e) }, 500);
+  }
+}
+
 // PUT /api/admin/videos -> thay toàn bộ videos.json (sửa/xóa/sắp xếp)
 async function saveVideos(request, env) {
   try {
@@ -236,6 +253,7 @@ export default {
     // ── API admin (phải được Cloudflare Access bảo vệ) ──
     if (pathname === "/api/admin/upload" && method === "POST") return handleUpload(request, env);
     if (pathname === "/api/admin/save" && method === "POST") return handleSave(request, env);
+    if (pathname === "/api/admin/thumb" && method === "POST") return handleThumb(request, env);
     if (pathname === "/api/admin/videos" && method === "PUT") return saveVideos(request, env);
     if (pathname === "/api/admin/categories" && method === "PUT") return saveCategories(request, env);
     if (pathname === "/api/admin/settings" && method === "PUT") return saveSettings(request, env);
