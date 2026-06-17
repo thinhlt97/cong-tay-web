@@ -3,6 +3,12 @@
   "main": "worker.js",
   "compatibility_date": "2026-06-01",
   "compatibility_flags": ["nodejs_compat"],
+  // Tên miền riêng: Cloudflare tự tạo bản ghi DNS + cấp SSL cho từng custom_domain.
+  // Yêu cầu zone "congtay.com" đã active trong cùng tài khoản Cloudflare.
+  "routes": [
+    { "pattern": "congtay.com", "custom_domain": true },
+    { "pattern": "www.congtay.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": ".",
     "binding": "ASSETS"

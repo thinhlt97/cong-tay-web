@@ -89,15 +89,22 @@ R2 binding name in `worker.js` is `BUCKET` (matches `wrangler.jsonc`).
 
 Routes `/admin` and `/api/admin/*` **must** be protected by Cloudflare Access (Zero Trust → Access → Applications → Self-hosted). Without it, anyone can upload to / delete from R2.
 
-**Current state (configured 2026-06-11):** one self-hosted Access app (id `e65a9bc3-…`) covers both
-`cong-tay-web.thinhlt1069-xnews.workers.dev/admin` and `…/api/admin` (two `destinations`), with an
+**Current state (configured 2026-06-11):** one self-hosted Access app (id `e65a9bc3-…`) with an
 Allow policy for `luongtuanthinh101197@gmail.com` via the One-time PIN IdP. Public read APIs
 (`/api/videos`, `/api/categories`, `/api/settings`) are intentionally left open.
 
-⚠️ **Gotcha:** the Access app `domain`/`destinations` must use the **full worker host**
-`cong-tay-web.thinhlt1069-xnews.workers.dev`, not the account apex `thinhlt1069-xnews.workers.dev`.
-The original app pointed at the apex (missing the `cong-tay-web.` prefix) and silently protected
-nothing — `/admin` and every write endpoint were world-writable until this was fixed.
+**Custom domain (added 2026-06-18):** the site now serves on `congtay.com` / `www.congtay.com`
+(custom_domain routes in `wrangler.jsonc`); the old `*.workers.dev` URL is disabled
+(`workers_dev` not set). **The Access app `destinations` MUST include the live host** — i.e.
+`congtay.com/admin` and `congtay.com/api/admin` (add `www.` variants too if used). After the
+domain switch, `/admin` was briefly world-writable because the app still only listed the old
+`workers.dev` host. Whenever the serving host changes, update the Access app destinations to match.
+
+⚠️ **Gotcha:** the Access app `domain`/`destinations` must use the **exact live host serving the
+Worker** (now `congtay.com`), not the account apex. An app pointed at the wrong/old host silently
+protects nothing — `/admin` and every write endpoint become world-writable. Verify with
+`curl -sI https://congtay.com/admin`: a protected route returns a 302 redirect to a
+`*.cloudflareaccess.com` login page; a bare `200` (the admin HTML) means it is NOT protected.
 
 ## Video categories and icon mapping
 
