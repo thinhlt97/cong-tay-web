@@ -129,7 +129,9 @@ async function handleSave(request, env) {
   const BASE = (env.PUBLIC_BASE || "").replace(/\/$/, "");
   try {
     const { title, category, desc, duration, videoKey, thumbBase64 } = await request.json();
-    if (!title || !category || !videoKey) return json({ error: "Thiếu tiêu đề, danh mục hoặc file" }, 400);
+    if (!title || !videoKey) return json({ error: "Thiếu tiêu đề hoặc file" }, 400);
+    // Danh mục có thể để trống lúc tải lên — phân loại lại sau trong tab Quản lý.
+    const cat = String(category || "").trim() || "Chưa phân loại";
 
     let thumb = "";
     if (thumbBase64) {
@@ -143,17 +145,19 @@ async function handleSave(request, env) {
     const list = await readJSON(env, "videos.json", []);
     const videos = Array.isArray(list) ? list : [];
     videos.unshift({
-      title, desc: desc || "", category, duration: duration || "",
-      type: "file", src: `${BASE}/${videoKey}`, thumb,
+      title, desc: desc || "", category: cat, duration: duration || "",
+      type: "file", src: `${BASE}/${videoKey}`, thumb, createdAt: Date.now(),
     });
     await writeJSON(env, "videos.json", videos);
 
-    // Tự đăng ký danh mục mới nếu chưa tồn tại trong categories.json
-    const cats = await readJSON(env, "categories.json", DEFAULT_CATEGORIES);
-    const catList = Array.isArray(cats) ? cats : DEFAULT_CATEGORIES;
-    if (!catList.some((c) => c.name === category)) {
-      catList.push({ name: category, icon: guessIcon(category) });
-      await writeJSON(env, "categories.json", catList);
+    // Tự đăng ký danh mục mới nếu chưa tồn tại (bỏ qua mục giữ chỗ "Chưa phân loại")
+    if (cat !== "Chưa phân loại") {
+      const cats = await readJSON(env, "categories.json", DEFAULT_CATEGORIES);
+      const catList = Array.isArray(cats) ? cats : DEFAULT_CATEGORIES;
+      if (!catList.some((c) => c.name === cat)) {
+        catList.push({ name: cat, icon: guessIcon(cat) });
+        await writeJSON(env, "categories.json", catList);
+      }
     }
 
     return json({ ok: true });
@@ -185,15 +189,20 @@ async function saveVideos(request, env) {
     const body = await request.json();
     if (!Array.isArray(body)) return json({ error: "Dữ liệu phải là một mảng" }, 400);
     // Chỉ giữ các trường hợp lệ, đảm bảo có tiêu đề + danh mục
-    const clean = body.map((v) => ({
-      title: String(v.title || "").trim(),
-      desc: String(v.desc || ""),
-      category: String(v.category || "").trim(),
-      duration: String(v.duration || ""),
-      type: v.type === "embed" ? "embed" : "file",
-      src: String(v.src || ""),
-      thumb: String(v.thumb || ""),
-    }));
+    const clean = body.map((v) => {
+      const o = {
+        title: String(v.title || "").trim(),
+        desc: String(v.desc || ""),
+        category: String(v.category || "").trim(),
+        duration: String(v.duration || ""),
+        type: v.type === "embed" ? "embed" : "file",
+        src: String(v.src || ""),
+        thumb: String(v.thumb || ""),
+      };
+      // Giữ lại dấu thời gian tải lên (để trang chủ sắp theo "mới nhất")
+      if (v.createdAt != null && !isNaN(+v.createdAt)) o.createdAt = +v.createdAt;
+      return o;
+    });
     await writeJSON(env, "videos.json", clean);
     return json({ ok: true, count: clean.length });
   } catch (e) {

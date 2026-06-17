@@ -203,6 +203,14 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
 .save-bar .submit{box-shadow:0 -8px 20px -12px rgba(0,0,0,.25)}
 .empty-state{text-align:center;color:var(--ink-2);padding:40px 20px;font-size:15px}
 
+/* hàng chờ tải nhiều video */
+.qstatus{display:flex;align-items:center;gap:8px;min-height:18px}
+.qbar{flex:1;height:6px;background:var(--line);border-radius:100px;overflow:hidden}
+.qbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:100px;transition:width .3s ease}
+.okstat{color:var(--green);font-weight:600;font-size:13px}
+.errstat{color:#c22a18;font-weight:600;font-size:13px}
+.vthumb.empty{font-size:20px}
+
 @media(max-width:560px){
   .thumb-wrap{grid-template-columns:1fr}
   .progress-pct{font-size:18px}
@@ -235,96 +243,30 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
     <button class="tab" data-tab="site">Trang chủ</button>
   </div>
 
-  <!-- ════════ TAB: UPLOAD ════════ -->
+  <!-- ════════ TAB: UPLOAD (nhiều video cùng lúc) ════════ -->
   <div class="panel active" id="panel-upload">
     <div class="drop" id="drop">
-      <div id="dropEmpty">
-        <div class="drop-icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-            <path d="M12 15V3m0 0L8 7m4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <div class="drop-title">Kéo video vào đây</div>
-        <div class="drop-sub">hoặc bấm để chọn · MP4 khuyến nghị · mọi kích thước</div>
+      <div class="drop-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M12 15V3m0 0L8 7m4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" stroke-linecap="round"/>
+        </svg>
       </div>
-      <div id="dropFilled" style="display:none" class="file-info">
-        <div class="file-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/>
-            <path d="M14 2v5h5"/>
-            <path d="m10 11 5 3-5 3V11z" fill="currentColor"/>
-          </svg>
-        </div>
-        <div>
-          <div class="file-name" id="fileNameDisplay"></div>
-          <div class="file-size" id="fileSizeDisplay"></div>
-        </div>
-        <button class="file-change" id="changeBtn" type="button">Đổi file</button>
-      </div>
-      <input type="file" id="fileInput" accept="video/*">
+      <div class="drop-title">Kéo các video vào đây</div>
+      <div class="drop-sub">hoặc bấm để chọn · chọn được nhiều file · MP4 khuyến nghị</div>
+      <input type="file" id="fileInput" accept="video/*" multiple>
     </div>
 
-    <div class="card" id="cardMeta">
-      <div class="card-label">Thông tin video</div>
-      <div class="field">
-        <label>Tiêu đề</label>
-        <input type="text" id="title" placeholder="Nhập tiêu đề…" autocomplete="off">
+    <div id="queueWrap" style="display:none">
+      <div class="toolbar">
+        <span class="count" id="qCount">—</span>
+        <button class="file-change" id="addMore" type="button">+ Thêm video</button>
       </div>
-      <div class="field">
-        <label>Mô tả (tuỳ chọn)</label>
-        <textarea id="desc" placeholder="Mô tả ngắn…"></textarea>
-      </div>
-      <div class="field">
-        <label>Thời lượng</label>
-        <input type="text" id="duration" placeholder="vd: 4:12" style="max-width:120px">
-      </div>
-    </div>
-
-    <div class="card" id="cardCat">
-      <div class="card-label">Danh mục</div>
-      <div class="chips" id="chips"></div>
-    </div>
-
-    <div class="card" id="cardThumb">
-      <div class="card-label">Ảnh đại diện</div>
-      <div class="thumb-wrap">
-        <div class="thumb-preview" id="thumbPreview">
-          <div class="no-thumb" id="noThumb">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <path d="m21 15-5-5L5 21"/>
-            </svg>
-          </div>
-          <img id="thumbImg" alt="" style="display:none">
-        </div>
-        <div class="thumb-controls">
-          <div class="hint">Kéo để chọn khung hình</div>
-          <input type="range" id="slider" min="0" max="100" value="5" step="1">
-          <div class="btn-row">
-            <button class="btn-sm dark" id="capBtn" type="button">Dùng khung này</button>
-            <button class="btn-sm light" id="upThumbBtn" type="button">Tải ảnh riêng</button>
-          </div>
-          <input type="file" id="thumbFile" accept="image/*" style="display:none">
-        </div>
-      </div>
-    </div>
-
-    <div class="submit-wrap" id="submitWrap" style="display:none">
-      <button class="submit" id="submitBtn">Đăng video</button>
-    </div>
-
-    <div class="progress-area" id="progressArea">
-      <div class="progress-header">
-        <span class="progress-label" id="progressLabel">Đang tải lên…</span>
-        <span class="progress-pct" id="progressPct">0%</span>
-      </div>
-      <div class="progress-bar"><i id="progressFill"></i></div>
-      <div class="progress-meta">
-        <div><b id="progressSpeed">—</b> MB/s</div>
-        <div>Còn khoảng <b id="progressEta">—</b></div>
-        <div id="progressChunk"></div>
+      <div class="hint" style="margin-bottom:12px">Đặt tên & chọn danh mục ngay tại đây, hoặc để trống rồi
+        phân loại sau ở tab “Quản lý video”. Ảnh đại diện lấy tự động — đổi sau bằng nút “Đổi ảnh”.</div>
+      <div class="list" id="uploadQueue"></div>
+      <div class="save-bar">
+        <button class="submit" id="uploadAll">Đăng tất cả</button>
       </div>
     </div>
 
@@ -407,9 +349,6 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
     <canvas id="tcanvas" style="display:none"></canvas>
   </div>
 </div>
-
-<video id="vid" style="display:none" muted playsinline crossorigin="anonymous"></video>
-<canvas id="canvas" style="display:none"></canvas>
 
 <script>
 const CHUNK = 50 * 1024 * 1024;
@@ -503,7 +442,8 @@ function renderManage(){
       ? `<img class="vthumb" src="${esc(v.thumb)}" alt="">`
       : `<div class="vthumb empty">🔒</div>`;
     return `<div class="item" data-sortable draggable="false"
-        data-src="${esc(v.src)}" data-thumb="${esc(v.thumb)}" data-type="${esc(v.type||'file')}">
+        data-src="${esc(v.src)}" data-thumb="${esc(v.thumb)}" data-type="${esc(v.type||'file')}"
+        data-created="${esc(v.createdAt!=null?String(v.createdAt):'')}">
       <div class="handle">⠿</div>
       <div class="vthumb-cell">
         ${thumb}
@@ -552,7 +492,7 @@ $("saveVideos").onclick=async()=>{
           {key:thumbKeyFor(it.dataset.src),thumbBase64:it._pendingThumb.split(",")[1]});
         thumb=r.thumb;
       }
-      out.push({
+      const row={
         title:it.querySelector(".vtitle").value.trim(),
         desc:it.querySelector(".vdesc").value,
         category:it.querySelector(".vcat").value,
@@ -560,7 +500,9 @@ $("saveVideos").onclick=async()=>{
         type:it.dataset.type||"file",
         src:it.dataset.src,
         thumb,
-      });
+      };
+      if(it.dataset.created)row.createdAt=Number(it.dataset.created);
+      out.push(row);
     }
     await putJSON("/api/admin/videos",out);
     state.videos=out;
@@ -731,43 +673,17 @@ async function postJSON(url,data){
 }
 
 /* ════════════════════════════════════════════════════════
-   TAB: UPLOAD — luồng đăng video (giữ nguyên như trước)
+   TAB: UPLOAD — tải LÊN NHIỀU video cùng lúc, phân loại/đặt tên ngay hoặc để sau
    ════════════════════════════════════════════════════════ */
-const drop=$("drop"),fileInput=$("fileInput"),vid=$("vid"),canvas=$("canvas");
-const thumbImg=$("thumbImg"),noThumb=$("noThumb"),slider=$("slider");
-const msg=$("msg"),progressArea=$("progressArea");
-let videoFile=null, thumbData="", customThumb=false, selectedCat="", uploadInProgress=false;
-
-// chips danh mục (đọc từ state.categories)
-function renderUploadCats(){
-  const wrap=$("chips");wrap.innerHTML="";
-  if(selectedCat&&!state.categories.some(c=>c.name===selectedCat))selectedCat="";
-  state.categories.forEach(c=>{
-    const btn=document.createElement("button");
-    btn.type="button";btn.className="chip"+(c.name===selectedCat?" active":"");
-    btn.textContent=c.name;
-    btn.onclick=()=>{
-      wrap.querySelectorAll(".chip").forEach(x=>x.classList.remove("active"));
-      btn.classList.add("active");selectedCat=c.name;
-    };
-    wrap.appendChild(btn);
-  });
-  if(!state.categories.length)
-    wrap.innerHTML=`<span class="hint">Chưa có danh mục — thêm ở tab “Danh mục”.</span>`;
-}
+const drop=$("drop"),fileInput=$("fileInput"),msg=$("msg");
+let queue=[];          // {id,file,title,duration,thumb,cat,status,pct,err}
+let qSeq=0, uploading=false;
 
 function fmtSize(b){
   if(b<1024)return b+"B";
   if(b<1024*1024)return (b/1024).toFixed(1)+"KB";
   if(b<1024*1024*1024)return (b/1024/1024).toFixed(1)+"MB";
   return (b/1024/1024/1024).toFixed(2)+"GB";
-}
-function fmtTime(s){
-  if(!isFinite(s)||s<0)return "—";
-  s=Math.round(s);
-  if(s<60)return s+"s";
-  if(s<3600)return Math.floor(s/60)+"m"+String(s%60).padStart(2,"0")+"s";
-  return Math.floor(s/3600)+"h"+String(Math.floor((s%3600)/60)).padStart(2,"0")+"m";
 }
 function fmtDur(t){t=Math.round(t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
 function slug(s){
@@ -777,155 +693,171 @@ function slug(s){
 function titleFromFilename(name){
   return name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," ").replace(/\b\w/g,c=>c.toUpperCase()).trim();
 }
-function showMsg(text,ok){msg.textContent=text;msg.className="msg show "+(ok?"ok":"err");}
+function showMsg(text,ok){msg.textContent=text;msg.className="msg show "+(ok?"ok":"err");
+  if(ok)setTimeout(()=>msg.classList.remove("show"),5000);}
 
-drop.onclick=e=>{
-  if(e.target===$("changeBtn")||$("changeBtn").contains(e.target))return;
-  if(!videoFile) fileInput.click();
-};
-$("changeBtn").onclick=e=>{e.stopPropagation();resetFile();fileInput.click();};
-drop.ondragover=e=>{e.preventDefault();if(!videoFile)drop.classList.add("over");};
-drop.ondragleave=()=>drop.classList.remove("over");
-drop.ondrop=e=>{
-  e.preventDefault();drop.classList.remove("over");
-  if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);
-};
-fileInput.onchange=e=>{if(e.target.files[0])handleFile(e.target.files[0]);};
-
-function resetFile(){
-  videoFile=null;thumbData="";customThumb=false;
-  drop.classList.remove("has-file");
-  $("dropEmpty").style.display="";
-  $("dropFilled").style.display="none";
-  ["cardMeta","cardCat","cardThumb","submitWrap"].forEach(id=>$(id).style.display="none");
-  ["cardMeta","cardCat","cardThumb"].forEach(id=>$(id).classList.remove("show"));
-  thumbImg.style.display="none";noThumb.style.display="";
-  progressArea.classList.remove("show");
-  msg.classList.remove("show");
+// đọc thời lượng + chụp 1 khung làm ảnh đại diện (object URL cùng nguồn → canvas không bị "taint")
+function probeVideo(file){
+  return new Promise(resolve=>{
+    const v=document.createElement("video");
+    v.muted=true;v.playsInline=true;v.preload="metadata";
+    const url=URL.createObjectURL(file);
+    v.src=url;
+    v.onloadedmetadata=()=>{v.currentTime=Math.min(5,(v.duration||0)*0.1)||0;};
+    v.onseeked=()=>{
+      let thumb="";
+      try{
+        const w=640,h=Math.round(640*v.videoHeight/v.videoWidth)||360;
+        const c=document.createElement("canvas");c.width=w;c.height=h;
+        c.getContext("2d").drawImage(v,0,0,w,h);
+        thumb=c.toDataURL("image/jpeg",.83);
+      }catch(_){}
+      URL.revokeObjectURL(url);
+      resolve({duration:isFinite(v.duration)?fmtDur(v.duration):"",thumb});
+    };
+    v.onerror=()=>{URL.revokeObjectURL(url);resolve({duration:"",thumb:""});};
+  });
 }
 
-function handleFile(f){
-  if(!f.type.startsWith("video/")){showMsg("Vui lòng chọn file video.",false);return;}
-  videoFile=f; customThumb=false;
-  drop.classList.add("has-file");
-  $("dropEmpty").style.display="none";
-  $("dropFilled").style.display="";
-  $("fileNameDisplay").textContent=f.name;
-  $("fileSizeDisplay").textContent=fmtSize(f.size)+" · "+f.type;
-  $("title").value=titleFromFilename(f.name);
-  ["cardMeta","cardCat","cardThumb"].forEach(id=>{$(id).style.display="block";$(id).classList.add("show");});
-  $("submitWrap").style.display="block";
-  msg.classList.remove("show");
-  vid.src=URL.createObjectURL(f);
-  vid.onloadedmetadata=()=>{
-    $("duration").value=fmtDur(vid.duration);
-    slider.max=Math.max(1,Math.floor(vid.duration)-1);
-    const t=Math.min(5,vid.duration*0.1);
-    slider.value=Math.floor(t);
-    vid.currentTime=Math.floor(t);
-  };
-  vid.onseeked=()=>{if(!customThumb)capture();};
+// danh sách option danh mục cho mỗi hàng (mặc định: chưa phân loại)
+function catSelectHTML(selected){
+  let o=`<option value=""${!selected?" selected":""}>— Chưa phân loại —</option>`;
+  o+=state.categories.map(c=>`<option value="${esc(c.name)}"${c.name===selected?" selected":""}>${esc(c.name)}</option>`).join("");
+  return o;
+}
+function statusHTML(item){
+  if(item.status==="probe")return `<span class="hint">Đang đọc video…</span>`;
+  if(item.status==="ready")return `<span class="hint">${fmtSize(item.file.size)} · sẵn sàng</span>`;
+  if(item.status==="uploading")return `<div class="qbar"><i style="width:${Math.round(item.pct||0)}%"></i></div><span class="hint">${Math.round(item.pct||0)}%</span>`;
+  if(item.status==="done")return `<span class="okstat">✓ Đã đăng</span>`;
+  if(item.status==="error")return `<span class="errstat">⚠ ${esc(item.err||"Lỗi")}</span>`;
+  return "";
+}
+function rowHTML(item){
+  const thumb=item.thumb?`<img class="vthumb" src="${item.thumb}" alt="">`:`<div class="vthumb empty">⏳</div>`;
+  return `<div class="item" data-id="${item.id}">
+    <div class="vthumb-cell">${thumb}</div>
+    <div class="vfields">
+      <input type="text" class="qtitle" value="${esc(item.title)}" placeholder="Tiêu đề">
+      <div class="vrow2">
+        <select class="qcat vcat">${catSelectHTML(item.cat)}</select>
+        <input type="text" class="qdur vdur" value="${esc(item.duration)}" placeholder="4:12">
+      </div>
+      <div class="qstatus" data-status>${statusHTML(item)}</div>
+    </div>
+    <div class="actions"><button type="button" class="icon-btn del" title="Bỏ khỏi hàng chờ">🗑</button></div>
+  </div>`;
+}
+function updateQCount(){$("qCount").textContent=queue.length+" video trong hàng chờ";}
+function renderQueue(){
+  $("uploadQueue").innerHTML=queue.map(rowHTML).join("");
+  updateQCount();
+  $("queueWrap").style.display=queue.length?"block":"none";
+}
+function updateQueueRow(item){
+  const row=$("uploadQueue").querySelector(`[data-id="${item.id}"]`);
+  if(!row)return;
+  if(item.thumb){const cell=row.querySelector(".vthumb-cell");
+    if(!cell.querySelector("img"))cell.innerHTML=`<img class="vthumb" src="${item.thumb}" alt="">`;}
+  const st=row.querySelector("[data-status]");if(st)st.innerHTML=statusHTML(item);
 }
 
-function capture(){
-  if(!vid.videoWidth)return;
-  const w=640,h=Math.round(640*vid.videoHeight/vid.videoWidth)||360;
-  canvas.width=w;canvas.height=h;
-  canvas.getContext("2d").drawImage(vid,0,0,w,h);
-  thumbData=canvas.toDataURL("image/jpeg",.83);
-  thumbImg.src=thumbData; thumbImg.style.display="block"; noThumb.style.display="none";
-}
-slider.oninput=()=>{customThumb=false;vid.currentTime=+slider.value;};
-$("capBtn").onclick=()=>{customThumb=false;capture();};
-$("upThumbBtn").onclick=()=>$("thumbFile").click();
-$("thumbFile").onchange=e=>{
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{
-    thumbData=r.result;thumbImg.src=thumbData;
-    thumbImg.style.display="block";noThumb.style.display="none";
-    customThumb=true;
-  };
-  r.readAsDataURL(f);
-};
-
-function setProgress(pct,speed,etaSec,chunkInfo){
-  $("progressPct").textContent=Math.round(pct)+"%";
-  $("progressFill").style.width=pct+"%";
-  $("progressSpeed").textContent=speed!=null?speed.toFixed(1):"—";
-  $("progressEta").textContent=etaSec!=null?fmtTime(etaSec):"—";
-  if(chunkInfo)$("progressChunk").textContent=chunkInfo;
+// cập nhật lại các <select> danh mục khi danh sách danh mục thay đổi (giữ lựa chọn hiện tại)
+function renderUploadCats(){
+  $("uploadQueue").querySelectorAll(".qcat").forEach(sel=>{
+    const cur=sel.value;sel.innerHTML=catSelectHTML(cur);
+  });
 }
 
-$("submitBtn").onclick=async()=>{
-  if(uploadInProgress)return;
-  const title=$("title").value.trim(), desc=$("desc").value.trim(), duration=$("duration").value.trim();
-  if(!videoFile){showMsg("Chưa chọn video.",false);return;}
-  if(!title){showMsg("Hãy nhập tiêu đề.",false);return;}
-  if(!selectedCat){showMsg("Hãy chọn danh mục.",false);return;}
-  uploadInProgress=true;
-  $("submitBtn").disabled=true;
-  progressArea.classList.add("show");
-  msg.classList.remove("show");
-  $("progressLabel").textContent="Đang tải lên…";
-  setProgress(0,null,null,"");
-
-  try{
-    const ext=(videoFile.name.match(/\.[^.]+$/)||[".mp4"])[0].toLowerCase();
-    const key=slug(title)+"-"+Date.now()+ext;
-    const totalSize=videoFile.size;
-    const totalParts=Math.ceil(totalSize/CHUNK);
-
-    const {uploadId}=await postJSON("/api/admin/upload?action=start",{key,contentType:videoFile.type});
-
-    const parts=[];
-    let uploadedBytes=0, startTime=Date.now();
-
-    for(let i=0;i<totalParts;i++){
-      const off=i*CHUNK;
-      const blob=videoFile.slice(off,Math.min(off+CHUNK,totalSize));
-      const r=await fetch(
-        `/api/admin/upload?action=part&key=${encodeURIComponent(key)}&uploadId=${encodeURIComponent(uploadId)}&part=${i+1}`,
-        {method:"POST",body:blob}
-      );
-      const j=await r.json();
-      if(!r.ok||j.error)throw new Error(j.error||"Lỗi phần "+(i+1));
-      parts.push({partNumber:i+1,etag:j.etag});
-      uploadedBytes=Math.min(off+CHUNK,totalSize);
-
-      const elapsed=(Date.now()-startTime)/1000;
-      const speedMBs=elapsed>0?(uploadedBytes/1024/1024)/elapsed:0;
-      const remaining=totalSize-uploadedBytes;
-      const eta=speedMBs>0?(remaining/1024/1024)/speedMBs:null;
-      const pct=(uploadedBytes/totalSize)*92;
-      setProgress(pct,speedMBs,eta,`Phần ${i+1}/${totalParts}`);
-    }
-
-    $("progressLabel").textContent="Hoàn tất multipart…";
-    setProgress(94,null,null,"");
-    await postJSON("/api/admin/upload?action=complete",{key,uploadId,parts});
-
-    $("progressLabel").textContent="Lưu thông tin…";
-    setProgress(97,null,null,"");
-    const thumbBase64=thumbData?thumbData.split(",")[1]:"";
-    await postJSON("/api/admin/save",{title,category:selectedCat,desc,duration,videoKey:key,thumbBase64});
-
-    setProgress(100,null,null,"");
-    $("progressLabel").textContent="Hoàn thành!";
-    showMsg("Đăng thành công! Video đã xuất hiện trên trang chủ.",true);
-    setTimeout(async()=>{
-      uploadInProgress=false;
-      $("submitBtn").disabled=false;
-      resetFile();
-      progressArea.classList.remove("show");
-      await loadData(); // làm mới danh sách quản lý
-    },2500);
-  }catch(e){
-    showMsg("Lỗi: "+e.message,false);
-    $("progressLabel").textContent="Lỗi tải lên";
-    uploadInProgress=false;
-    $("submitBtn").disabled=false;
+async function addFiles(files){
+  const vids=[...files].filter(f=>f.type.startsWith("video/"));
+  if(!vids.length){showMsg("Vui lòng chọn file video.",false);return;}
+  const fresh=[];
+  for(const f of vids){
+    const item={id:++qSeq,file:f,title:titleFromFilename(f.name),duration:"",thumb:"",cat:"",status:"probe",pct:0};
+    queue.push(item);fresh.push(item);
   }
+  renderQueue();
+  // đọc thời lượng + ảnh đại diện lần lượt cho từng file mới
+  for(const item of fresh){
+    const {duration,thumb}=await probeVideo(item.file);
+    item.duration=duration;item.thumb=thumb;item.status="ready";
+    // giữ tiêu đề/danh mục người dùng có thể đã sửa
+    const row=$("uploadQueue").querySelector(`[data-id="${item.id}"]`);
+    if(row){const d=row.querySelector(".qdur");if(d&&!d.value)d.value=duration;}
+    updateQueueRow(item);
+  }
+}
+
+drop.onclick=()=>fileInput.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add("over");};
+drop.ondragleave=()=>drop.classList.remove("over");
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");
+  if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);};
+fileInput.onchange=e=>{if(e.target.files.length)addFiles(e.target.files);e.target.value="";};
+$("addMore").onclick=()=>fileInput.click();
+
+// bỏ một video khỏi hàng chờ
+$("uploadQueue").addEventListener("click",e=>{
+  const b=e.target.closest(".del");if(!b||uploading)return;
+  const row=b.closest("[data-id]");const id=+row.dataset.id;
+  queue=queue.filter(x=>x.id!==id);row.remove();
+  updateQCount();$("queueWrap").style.display=queue.length?"block":"none";
+});
+
+// tải 1 video: multipart → save (tiêu đề/danh mục/thời lượng lấy từ chính item)
+async function uploadOne(item){
+  const f=item.file;
+  const ext=(f.name.match(/\.[^.]+$/)||[".mp4"])[0].toLowerCase();
+  const key=slug(item.title)+"-"+Date.now()+"-"+item.id+ext;
+  const totalSize=f.size,totalParts=Math.ceil(totalSize/CHUNK);
+  const {uploadId}=await postJSON("/api/admin/upload?action=start",{key,contentType:f.type});
+  const parts=[];
+  for(let i=0;i<totalParts;i++){
+    const off=i*CHUNK;const blob=f.slice(off,Math.min(off+CHUNK,totalSize));
+    const r=await fetch(`/api/admin/upload?action=part&key=${encodeURIComponent(key)}&uploadId=${encodeURIComponent(uploadId)}&part=${i+1}`,
+      {method:"POST",body:blob});
+    const j=await r.json();
+    if(!r.ok||j.error)throw new Error(j.error||"Lỗi phần "+(i+1));
+    parts.push({partNumber:i+1,etag:j.etag});
+    item.pct=((i+1)/totalParts)*92;updateQueueRow(item);
+  }
+  await postJSON("/api/admin/upload?action=complete",{key,uploadId,parts});
+  item.pct=97;updateQueueRow(item);
+  const thumbBase64=item.thumb?item.thumb.split(",")[1]:"";
+  await postJSON("/api/admin/save",
+    {title:item.title,category:item.cat,desc:"",duration:item.duration,videoKey:key,thumbBase64});
+  item.pct=100;updateQueueRow(item);
+}
+
+$("uploadAll").onclick=async()=>{
+  if(uploading)return;
+  const rows=[...$("uploadQueue").querySelectorAll("[data-id]")];
+  if(!rows.length){showMsg("Chưa có video nào trong hàng chờ.",false);return;}
+  for(const r of rows){
+    if(!r.querySelector(".qtitle").value.trim()){showMsg("Mỗi video cần có tiêu đề.",false);return;}
+  }
+  // đồng bộ giá trị người dùng nhập vào item
+  for(const r of rows){
+    const item=queue.find(x=>x.id===+r.dataset.id);if(!item)continue;
+    item.title=r.querySelector(".qtitle").value.trim();
+    item.cat=r.querySelector(".qcat").value;
+    item.duration=r.querySelector(".qdur").value.trim();
+  }
+  uploading=true;const btn=$("uploadAll");btn.disabled=true;btn.textContent="Đang đăng…";
+  msg.classList.remove("show");
+  let ok=0,fail=0;
+  for(const r of rows){
+    const item=queue.find(x=>x.id===+r.dataset.id);if(!item||item.status==="done")continue;
+    item.status="uploading";item.pct=0;updateQueueRow(item);
+    try{await uploadOne(item);item.status="done";updateQueueRow(item);ok++;}
+    catch(e){item.status="error";item.err=e.message;updateQueueRow(item);fail++;}
+  }
+  uploading=false;btn.disabled=false;btn.textContent="Đăng tất cả";
+  showMsg(`Hoàn tất: ${ok} video đã đăng${fail?", "+fail+" video lỗi":""}.`,fail===0);
+  await loadData();                    // làm mới tab Quản lý
+  queue=queue.filter(x=>x.status!=="done");
+  renderQueue();
 };
 
 // ── Khởi động ──

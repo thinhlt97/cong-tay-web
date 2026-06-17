@@ -84,6 +84,13 @@
   .sechead h3{font-weight:700;font-size:clamp(21px,3vw,28px);letter-spacing:-.02em}
   .sechead .num{margin-left:auto;font-size:13px;font-weight:600;color:var(--ink-2)}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px}
+  .catsec.clamped .card.extra{display:none}
+  .more{display:flex;justify-content:center;margin-top:30px}
+  .morebtn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;color:var(--ink);
+    background:var(--surface);border:1.5px solid var(--line-2);border-radius:100px;padding:11px 26px;
+    display:inline-flex;align-items:center;gap:8px;transition:all .16s}
+  .morebtn:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:var(--shadow)}
+  .morebtn .ar{transition:transform .2s}
 
   .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
@@ -240,14 +247,44 @@ function applySettings(){const s=SETTINGS||{};
   if(s.heroSubtitle!=null)document.querySelector('.hero p').textContent=s.heroSubtitle;
   if(s.footer!=null)document.getElementById('footerText').textContent=s.footer;}
 
-function cardHTML(v,delay){const idx=VIDEOS.indexOf(v);
+const SECTION_LIMIT=6;          // số video hiện sẵn mỗi mục (còn lại ẩn sau "Xem thêm")
+const ALL_ID="sec-all";         // id mục "Tất cả video"
+
+/* tất cả video, sắp theo thời gian tải lên gần nhất.
+   video cũ chưa có createdAt giữ nguyên thứ tự mảng (vốn đã mới-trước) và xếp sau nhóm có mốc thời gian */
+function allVideosSorted(){
+  return VIDEOS.map((v,i)=>({v,i})).sort((a,b)=>{
+    const ta=a.v.createdAt,tb=b.v.createdAt;
+    if(ta!=null&&tb!=null)return tb-ta;
+    if(ta!=null)return -1;
+    if(tb!=null)return 1;
+    return a.i-b.i;
+  }).map(x=>x.v);
+}
+function matchQ(v){return !query||(v.title+v.desc+v.category).toLowerCase().includes(query);}
+
+function cardHTML(v,delay,extra){const idx=VIDEOS.indexOf(v);
   const thumb=v.thumb?`<img src="${v.thumb}" alt="" loading="lazy">`:`<div class="gen">${catIcon(v.category)}</div>`;
-  return `<article class="card reveal" style="transition-delay:${delay}ms" data-i="${idx}">
+  return `<article class="card reveal${extra?' extra':''}" style="transition-delay:${delay}ms" data-i="${idx}">
     <div class="thumb">${thumb}<div class="play"><b></b></div><span class="dur">${v.duration||""}</span></div>
     <div class="cbody"><div class="cat">${v.category}</div><h4>${v.title}</h4><p>${v.desc||""}</p></div>
   </article>`;}
 
-function buildMenu(){let dd="",qk="";
+function sectionHTML(id,ic,name,items){
+  const limited=!query&&items.length>SECTION_LIMIT;
+  const cards=items.map((v,i)=>cardHTML(v,Math.min(i,6)*50,limited&&i>=SECTION_LIMIT)).join('');
+  const more=limited
+    ? `<div class="more"><button class="morebtn" data-sec="${id}">Xem thêm ${items.length-SECTION_LIMIT} video <span class="ar">↓</span></button></div>`
+    : '';
+  return `<section class="catsec${limited?' clamped':''}" id="${id}">
+    <div class="sechead reveal"><span class="ic">${ic}</span><h3>${name}</h3>
+      <span class="num">${items.length} video</span></div>
+    <div class="grid">${cards}</div>${more}</section>`;
+}
+
+function buildMenu(){
+  let dd=`<a href="#${ALL_ID}"><span class="ic">🆕</span>Tất cả video<b>${VIDEOS.length}</b></a>`;
+  let qk=`<a href="#${ALL_ID}"><span class="ic">🆕</span>Tất cả</a>`;
   orderedGroups().forEach(([cat,items])=>{const id="cat-"+slug(cat),ic=catIcon(cat);
     dd+=`<a href="#${id}"><span class="ic">${ic}</span>${cat}<b>${items.length}</b></a>`;
     qk+=`<a href="#${id}"><span class="ic">${ic}</span>${cat}</a>`;});
@@ -256,19 +293,32 @@ function buildMenu(){let dd="",qk="";
 let io;
 function render(){
   let html="",any=false;
+  // Mục "Tất cả video" (theo mới nhất) — chỉ khi không tìm kiếm, tránh trùng lặp
+  if(!query){
+    const all=allVideosSorted();
+    if(all.length){any=true;html+=sectionHTML(ALL_ID,"🆕","Tất cả video",all);}
+  }
   orderedGroups().forEach(([cat,items])=>{
-    const shown=items.filter(v=>!query||(v.title+v.desc+v.category).toLowerCase().includes(query));
-    if(!shown.length)return;any=true;const id="cat-"+slug(cat);
-    html+=`<section class="catsec" id="${id}">
-      <div class="sechead reveal"><span class="ic">${catIcon(cat)}</span><h3>${cat}</h3>
-        <span class="num">${shown.length} video</span></div>
-      <div class="grid">${shown.map((v,i)=>cardHTML(v,Math.min(i,6)*60)).join('')}</div></section>`;});
+    const shown=items.filter(matchQ);
+    if(!shown.length)return;any=true;
+    html+=sectionHTML("cat-"+slug(cat),catIcon(cat),cat,shown);});
   content.innerHTML = any ? html : `<div class="state"><p>Không tìm thấy video phù hợp.</p></div>`;
   content.querySelectorAll('.card').forEach(c=>c.onclick=()=>openV(VIDEOS[+c.dataset.i]));
   if(io)io.disconnect();
   io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
   content.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 }
+
+// "Xem thêm": bỏ giới hạn của mục đó và hiện nốt các video còn lại
+content.addEventListener('click',e=>{
+  const b=e.target.closest('.morebtn'); if(!b)return;
+  const sec=document.getElementById(b.dataset.sec);
+  if(sec){sec.classList.remove('clamped');
+    sec.querySelectorAll('.card.extra').forEach((el,i)=>{
+      el.style.transitionDelay=Math.min(i,6)*40+"ms";
+      requestAnimationFrame(()=>el.classList.add('in'));});}
+  const more=b.closest('.more'); if(more)more.remove();
+});
 
 function openV(v){
   pframe.innerHTML = v.type==="embed"
