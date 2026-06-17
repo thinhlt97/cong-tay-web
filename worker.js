@@ -249,10 +249,35 @@ async function saveSettings(request, env) {
   }
 }
 
+// GET / -> phục vụ index.html, chèn động og:image = ảnh đại diện video mới nhất.
+// (Trình quét của Facebook/Zalo không chạy JS nên phải chèn ở server.)
+async function serveHome(request, env) {
+  const res = await env.ASSETS.fetch(request);
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("text/html")) return res;
+
+  let img = "";
+  try {
+    const list = await readJSON(env, "videos.json", []);
+    const v = (Array.isArray(list) ? list : []).find((x) => x && x.thumb);
+    if (v) img = v.thumb;
+  } catch (_) {}
+
+  const setOrRemove = { element(e) { img ? e.setAttribute("content", img) : e.remove(); } };
+  return new HTMLRewriter()
+    .on('meta[property="og:image"]', setOrRemove)
+    .on('meta[name="twitter:image"]', setOrRemove)
+    .transform(res);
+}
+
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
     const method = request.method;
+
+    // ── Trang chủ: chèn og:image động ──
+    if ((pathname === "/" || pathname === "/index.html") && method === "GET")
+      return serveHome(request, env);
 
     // ── API đọc (công khai) ──
     if (pathname === "/api/videos") return getVideos(env);

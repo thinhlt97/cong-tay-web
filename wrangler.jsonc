@@ -11,7 +11,10 @@
   ],
   "assets": {
     "directory": ".",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // Chạy Worker trước cho trang chủ để serveHome() chèn og:image động.
+    // Các asset khác (favicon, ...) vẫn được phục vụ thẳng, không qua Worker.
+    "run_worker_first": ["/", "/index.html"]
   },
   "r2_buckets": [
     { "binding": "BUCKET", "bucket_name": "handcuff" }
