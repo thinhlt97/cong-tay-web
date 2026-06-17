@@ -272,8 +272,20 @@ async function serveHome(request, env) {
 
 export default {
   async fetch(request, env) {
-    const { pathname } = new URL(request.url);
+    const url = new URL(request.url);
     const method = request.method;
+
+    // ── Ép HTTPS + gộp www.congtay.com về congtay.com (301) ──
+    let scheme = url.protocol.replace(":", "");
+    const cfv = request.headers.get("CF-Visitor");
+    if (cfv) { try { const o = JSON.parse(cfv); if (o && o.scheme) scheme = o.scheme; } catch (_) {} }
+    const isWww = url.hostname === "www.congtay.com";
+    if (scheme !== "https" || isWww) {
+      const targetHost = isWww ? "congtay.com" : url.hostname;
+      return Response.redirect(`https://${targetHost}${url.pathname}${url.search}`, 301);
+    }
+
+    const { pathname } = url;
 
     // ── Trang chủ: chèn og:image động ──
     if ((pathname === "/" || pathname === "/index.html") && method === "GET")
