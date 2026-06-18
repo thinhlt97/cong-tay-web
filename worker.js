@@ -257,17 +257,47 @@ async function serveHome(request, env) {
   if (!ct.includes("text/html")) return res;
 
   let img = "";
+  let list = [];
   try {
-    const list = await readJSON(env, "videos.json", []);
-    const v = (Array.isArray(list) ? list : []).find((x) => x && x.thumb);
+    const raw = await readJSON(env, "videos.json", []);
+    list = Array.isArray(raw) ? raw : [];
+    const v = list.find((x) => x && x.thumb);
     if (v) img = v.thumb;
   } catch (_) {}
 
   const setOrRemove = { element(e) { img ? e.setAttribute("content", img) : e.remove(); } };
-  return new HTMLRewriter()
+
+  // JSON-LD: danh sách video (giúp Google hiểu nội dung + cơ hội rich result)
+  const vids = list.filter((v) => v && v.title).slice(0, 30).map((v) => {
+    const o = {
+      "@type": "VideoObject",
+      name: v.title,
+      description: v.desc || v.title,
+      thumbnailUrl: v.thumb || img || undefined,
+      uploadDate: v.createdAt ? new Date(v.createdAt).toISOString() : undefined,
+      contentUrl: v.type === "file" ? v.src : undefined,
+      embedUrl: v.type === "embed" ? v.src : undefined,
+    };
+    Object.keys(o).forEach((k) => o[k] === undefined && delete o[k]);
+    return o;
+  });
+  let ld = "";
+  if (vids.length) {
+    const doc = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Tuyển tập video còng tay",
+      itemListElement: vids.map((it, i) => ({ "@type": "ListItem", position: i + 1, item: it })),
+    };
+    // chèn JSON vào HTML: thay "<" để không phá thẻ <script>
+    ld = `<script type="application/ld+json">${JSON.stringify(doc).replace(/</g, "\\u003c")}</script>`;
+  }
+
+  let rw = new HTMLRewriter()
     .on('meta[property="og:image"]', setOrRemove)
-    .on('meta[name="twitter:image"]', setOrRemove)
-    .transform(res);
+    .on('meta[name="twitter:image"]', setOrRemove);
+  if (ld) rw = rw.on("head", { element(e) { e.append(ld, { html: true }); } });
+  return rw.transform(res);
 }
 
 export default {
