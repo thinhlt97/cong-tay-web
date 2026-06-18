@@ -249,6 +249,65 @@ async function saveSettings(request, env) {
   }
 }
 
+// Ngày hiện tại theo giờ VN (UTC+7), dạng YYYY-MM-DD
+function dayVN(offsetDays = 0) {
+  return new Date(Date.now() + 7 * 3600e3 - offsetDays * 86400e3).toISOString().slice(0, 10);
+}
+
+// POST /api/track -> đếm lượt truy cập / lượt xem video (công khai)
+//   { type: "visit" }                          -> +1 lượt truy cập trang
+//   { type: "view", key, title }               -> +1 lượt xem video
+async function handleTrack(request, env) {
+  try {
+    if (!env.STATS) return json({ ok: false });
+    const body = await request.json().catch(() => ({}));
+    const type = body.type === "view" ? "view" : "visit";
+    const day = dayVN();
+    const stmts = [
+      env.STATS.prepare(
+        "INSERT INTO daily(day,metric,count) VALUES(?1,?2,1) ON CONFLICT(day,metric) DO UPDATE SET count=count+1"
+      ).bind(day, type),
+    ];
+    if (type === "view" && body.key) {
+      const now = new Date().toISOString();
+      stmts.push(
+        env.STATS.prepare(
+          "INSERT INTO videos(vkey,title,views,last_view) VALUES(?1,?2,1,?3) " +
+          "ON CONFLICT(vkey) DO UPDATE SET views=views+1, last_view=?3, title=COALESCE(NULLIF(?2,''),title)"
+        ).bind(String(body.key), String(body.title || ""), now)
+      );
+    }
+    await env.STATS.batch(stmts);
+    return json({ ok: true });
+  } catch (e) {
+    return json({ ok: false, error: String((e && e.message) || e) });
+  }
+}
+
+// GET /api/admin/stats -> tổng hợp thống kê cho trang admin (được Access bảo vệ)
+async function getStats(env) {
+  try {
+    if (!env.STATS) return json({ error: "D1 (STATS) chưa được cấu hình" }, 500);
+    const since = dayVN(13); // 14 ngày gần nhất
+    const [totals, videos, daily] = await Promise.all([
+      env.STATS.prepare(
+        "SELECT (SELECT COALESCE(SUM(views),0) FROM videos) AS totalViews, " +
+        "(SELECT COALESCE(SUM(count),0) FROM daily WHERE metric='visit') AS totalVisits, " +
+        "(SELECT COUNT(*) FROM videos) AS trackedVideos"
+      ).first(),
+      env.STATS.prepare("SELECT vkey,title,views,last_view FROM videos ORDER BY views DESC LIMIT 300").all(),
+      env.STATS.prepare("SELECT day,metric,count FROM daily WHERE day>=?1 ORDER BY day").bind(since).all(),
+    ]);
+    return jsonResponse({
+      totals: totals || { totalViews: 0, totalVisits: 0, trackedVideos: 0 },
+      videos: videos.results || [],
+      daily: daily.results || [],
+    });
+  } catch (e) {
+    return json({ error: String((e && e.message) || e) }, 500);
+  }
+}
+
 // GET / -> phục vụ index.html, chèn động og:image = ảnh đại diện video mới nhất.
 // (Trình quét của Facebook/Zalo không chạy JS nên phải chèn ở server.)
 async function serveHome(request, env) {
@@ -325,8 +384,10 @@ export default {
     if (pathname === "/api/videos") return getVideos(env);
     if (pathname === "/api/categories") return getCategories(env);
     if (pathname === "/api/settings") return getSettings(env);
+    if (pathname === "/api/track" && method === "POST") return handleTrack(request, env);
 
     // ── API admin (phải được Cloudflare Access bảo vệ) ──
+    if (pathname === "/api/admin/stats" && method === "GET") return getStats(env);
     if (pathname === "/api/admin/upload" && method === "POST") return handleUpload(request, env);
     if (pathname === "/api/admin/save" && method === "POST") return handleSave(request, env);
     if (pathname === "/api/admin/thumb" && method === "POST") return handleThumb(request, env);

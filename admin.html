@@ -205,6 +205,27 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
 .save-bar .submit{box-shadow:0 -8px 20px -12px rgba(0,0,0,.25)}
 .empty-state{text-align:center;color:var(--ink-2);padding:40px 20px;font-size:15px}
 
+/* ── THỐNG KÊ ── */
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.stat-card .n{font-size:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat-card .l{font-size:12.5px;color:var(--ink-2);font-weight:600;margin-top:2px}
+.chart-legend{display:flex;gap:16px;margin-bottom:10px;font-size:12px;color:var(--ink-2)}
+.chart-legend span{display:flex;align-items:center;gap:6px}
+.chart-legend i{width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block}
+.chart-legend i.v{background:#c8cdd6}
+.chart{display:flex;align-items:flex-end;gap:8px;height:150px}
+.chart .day{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;min-width:0}
+.chart .bars{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%}
+.chart .bars i{width:9px;border-radius:3px 3px 0 0;background:var(--accent);min-height:1px}
+.chart .bars i.v{background:#c8cdd6}
+.chart .day span{font-size:9px;color:var(--ink-2);margin-top:5px;white-space:nowrap}
+.stat-tbl{width:100%;border-collapse:collapse;font-size:14px}
+.stat-tbl th,.stat-tbl td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.stat-tbl th{font-size:11.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.stat-tbl td.num{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.stat-tbl td.vt{font-weight:600}
+
 /* hàng chờ tải nhiều video */
 .qstatus{display:flex;align-items:center;gap:8px;min-height:18px}
 .qbar{flex:1;height:6px;background:var(--line);border-radius:100px;overflow:hidden}
@@ -241,6 +262,7 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
   <div class="tabs">
     <button class="tab active" data-tab="upload">Đăng video</button>
     <button class="tab" data-tab="manage">Quản lý video</button>
+    <button class="tab" data-tab="stats">Thống kê</button>
     <button class="tab" data-tab="cats">Danh mục</button>
     <button class="tab" data-tab="site">Trang chủ</button>
   </div>
@@ -286,6 +308,27 @@ input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointe
       <button class="submit" id="saveVideos">Lưu thay đổi</button>
     </div>
     <div class="msg" id="vMsg"></div>
+  </div>
+
+  <!-- ════════ TAB: STATISTICS ════════ -->
+  <div class="panel" id="panel-stats">
+    <div class="toolbar">
+      <span class="count" id="stCount">—</span>
+      <button class="file-change" id="stRefresh" type="button">↻ Làm mới</button>
+    </div>
+    <div class="stat-cards" id="statCards"></div>
+    <div class="card show">
+      <div class="card-label">Lượt truy cập & lượt xem · 14 ngày gần nhất</div>
+      <div class="chart-legend"><span><i></i>Lượt truy cập</span><span><i class="v"></i>Lượt xem video</span></div>
+      <div class="chart" id="statChart"></div>
+    </div>
+    <div class="card show">
+      <div class="card-label">Lượt xem theo từng video</div>
+      <div id="statTable"></div>
+    </div>
+    <p class="hint" style="margin-top:14px">Bảng trên đếm trực tiếp lượt mở video trên web. Số liệu truy cập tổng thể
+      (đã lọc bot, theo quốc gia, thiết bị…) xem chi tiết ở <b>Cloudflare → Analytics & Logs → Web Analytics</b>.</p>
+    <div class="msg" id="stMsg"></div>
   </div>
 
   <!-- ════════ TAB: CATEGORIES ════════ -->
@@ -384,8 +427,56 @@ document.querySelectorAll(".tab").forEach(t=>{
     document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
     t.classList.add("active");
     $("panel-"+t.dataset.tab).classList.add("active");
+    if(t.dataset.tab==="stats")loadStats();
   };
 });
+
+// ════════ TAB: THỐNG KÊ ════════
+async function loadStats(){
+  $("statCards").innerHTML=`<div class="stat-card"><div class="n">…</div><div class="l">Đang tải</div></div>`;
+  try{
+    const r=await fetch("/api/admin/stats?t="+Date.now(),{cache:"no-store"});
+    const j=await r.json();
+    if(!r.ok||j.error)throw new Error(j.error||"HTTP "+r.status);
+    renderStats(j);
+  }catch(e){
+    $("statCards").innerHTML="";
+    showMsgIn($("stMsg"),"Lỗi tải thống kê: "+e.message,false);
+  }
+}
+function nfmt(n){return Number(n||0).toLocaleString("vi-VN");}
+function renderStats(j){
+  const t=j.totals||{};
+  $("stCount").textContent="Cập nhật: "+new Date().toLocaleString("vi-VN");
+  $("statCards").innerHTML=[
+    ["Lượt truy cập",t.totalVisits],
+    ["Lượt xem video",t.totalViews],
+    ["Video được xem",t.trackedVideos],
+  ].map(([l,n])=>`<div class="stat-card"><div class="n">${nfmt(n)}</div><div class="l">${l}</div></div>`).join("");
+
+  // biểu đồ 14 ngày
+  const days={};
+  (j.daily||[]).forEach(d=>{(days[d.day]=days[d.day]||{visit:0,view:0})[d.metric]=d.count;});
+  const keys=Object.keys(days).sort();
+  const max=Math.max(1,...keys.map(k=>Math.max(days[k].visit,days[k].view)));
+  $("statChart").innerHTML=keys.length?keys.map(k=>{
+    const v=days[k],dd=k.slice(8)+"/"+k.slice(5,7);
+    return `<div class="day" title="${k}: ${v.visit} truy cập · ${v.view} lượt xem">
+      <div class="bars"><i style="height:${Math.round(v.visit/max*100)}%"></i><i class="v" style="height:${Math.round(v.view/max*100)}%"></i></div>
+      <span>${dd}</span></div>`;
+  }).join(""):`<span class="hint">Chưa có dữ liệu — số liệu xuất hiện khi có người truy cập/xem video.</span>`;
+
+  // bảng theo video
+  const vids=j.videos||[];
+  $("statTable").innerHTML=vids.length?`<table class="stat-tbl">
+    <thead><tr><th>Video</th><th style="text-align:right">Lượt xem</th><th>Xem gần nhất</th></tr></thead>
+    <tbody>${vids.map(v=>`<tr>
+      <td class="vt">${esc(v.title||v.vkey)}</td>
+      <td class="num">${nfmt(v.views)}</td>
+      <td>${v.last_view?new Date(v.last_view).toLocaleString("vi-VN"):"—"}</td>
+    </tr>`).join("")}</tbody></table>`:`<div class="empty-state">Chưa có lượt xem video nào.</div>`;
+}
+$("stRefresh").onclick=loadStats;
 
 // ════════ SORTABLE (kéo-thả bằng handle + nút ▲▼) ════════
 function makeSortable(container){

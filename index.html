@@ -237,6 +237,14 @@ const content=document.getElementById('content'),ddmenu=document.getElementById(
 let VIDEOS=[], CATEGORIES=[], SETTINGS={}, query="";
 document.getElementById('yr').textContent=new Date().getFullYear();
 
+/* ---- thống kê: gửi lượt truy cập / lượt xem (không chặn giao diện) ---- */
+const trackedViews=new Set();
+function track(payload){
+  try{
+    fetch("/api/track",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify(payload),keepalive:true}).catch(()=>{});
+  }catch(_){}}
+
 function slug(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 
@@ -342,6 +350,8 @@ content.addEventListener('click',e=>{
 });
 
 function openV(v){
+  const vkey=v.src||v.title;
+  if(vkey&&!trackedViews.has(vkey)){trackedViews.add(vkey);track({type:"view",key:vkey,title:v.title});}
   pframe.innerHTML = v.type==="embed"
     ? `<iframe src="${v.src}" allow="autoplay;fullscreen;encrypted-media" allowfullscreen></iframe>`
     : `<video src="${v.src}" controls autoplay playsinline></video>`;
@@ -380,6 +390,7 @@ async function load(){
     if(!Array.isArray(VIDEOS)||!VIDEOS.length){
       content.innerHTML=`<div class="state"><p>Chưa có video nào trong danh sách.</p></div>`;return;}
     buildMenu();render();
+    track({type:"visit"});
   }catch(err){
     content.innerHTML=`<div class="state"><p>Không tải được danh sách video.<br>Kiểm tra lại file videos.json.</p></div>`;
     console.error(err);
