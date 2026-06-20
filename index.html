@@ -267,7 +267,7 @@ function matchQ(v){return !query||(v.title+v.desc+v.category).toLowerCase().incl
 
 function cardHTML(v,delay,extra){
   const href="/watch?v="+encodeURIComponent(v.src||"");
-  const thumb=v.thumb?`<img src="${v.thumb}" alt="" loading="lazy">`:`<div class="gen">${catIcon(v.category)}</div>`;
+  const thumb=v.thumb?`<img src="${v.thumb}" alt="${v.title}" loading="lazy">`:`<div class="gen">${catIcon(v.category)}</div>`;
   return `<a class="card reveal${extra?' extra':''}" style="transition-delay:${delay}ms" href="${href}">
     <div class="thumb">${thumb}<div class="play"><b></b></div><span class="dur">${v.duration||""}</span></div>
     <div class="cbody"><div class="cat">${v.category}</div><h4>${v.title}</h4><p>${v.desc||""}</p></div>

@@ -414,6 +414,60 @@ async function serveWatch(request, env) {
   return rw.transform(res);
 }
 
+// Thoát ký tự đặc biệt để nhúng an toàn vào XML.
+function xmlEsc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[c]));
+}
+
+// GET /sitemap.xml -> sinh động: trang chủ + một URL /watch cho MỖI video,
+// kèm thẻ <video:video> (Google Video sitemap) để Google index từng video.
+async function serveSitemap(env) {
+  let list = [];
+  try {
+    const raw = await readJSON(env, "videos.json", []);
+    list = Array.isArray(raw) ? raw : [];
+  } catch (_) {}
+
+  const base = "https://congtay.com";
+  let urls =
+    `  <url>\n    <loc>${base}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+
+  for (const v of list) {
+    if (!v || !v.src || !v.title) continue;
+    const loc = `${base}/watch?v=${encodeURIComponent(v.src)}`;
+    const lastmod = v.createdAt ? new Date(v.createdAt).toISOString() : "";
+    const player =
+      v.type === "embed"
+        ? `\n      <video:player_loc>${xmlEsc(v.src)}</video:player_loc>`
+        : `\n      <video:content_loc>${xmlEsc(v.src)}</video:content_loc>`;
+    // Thẻ video:video cần thumbnail + title + description + (content_loc|player_loc).
+    const videoBlock = v.thumb
+      ? `\n    <video:video>` +
+        `\n      <video:thumbnail_loc>${xmlEsc(v.thumb)}</video:thumbnail_loc>` +
+        `\n      <video:title>${xmlEsc(v.title)}</video:title>` +
+        `\n      <video:description>${xmlEsc(v.desc || v.title)}</video:description>` +
+        player +
+        `\n    </video:video>`
+      : "";
+    urls +=
+      `  <url>\n    <loc>${xmlEsc(loc)}</loc>` +
+      (lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : "") +
+      videoBlock +
+      `\n  </url>\n`;
+  }
+
+  const xml =
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ` +
+    `xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n` +
+    urls +
+    `</urlset>\n`;
+  return new Response(xml, {
+    headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "no-store" },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -438,6 +492,10 @@ export default {
     // ── Trang xem video riêng: chèn meta động cho từng video ──
     if (pathname === "/watch" && method === "GET")
       return serveWatch(request, env);
+
+    // ── Sitemap động: liệt kê mọi trang /watch để Google index từng video ──
+    if (pathname === "/sitemap.xml" && method === "GET")
+      return serveSitemap(env);
 
     // ── API đọc (công khai) ──
     if (pathname === "/api/videos") return getVideos(env);
