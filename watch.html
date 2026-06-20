@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đang xem · CÒNG TAY</title>
+<meta name="description" content="Xem video còng tay - tuyển tập video giải trí.">
+<meta name="theme-color" content="#ff3b25">
+<link rel="canonical" href="https://congtay.com/watch">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:type" content="video.other">
+<meta property="og:site_name" content="CÒNG TAY">
+<meta property="og:title" content="Đang xem · CÒNG TAY">
+<meta property="og:description" content="Xem video còng tay - tuyển tập video giải trí.">
+<meta property="og:url" content="https://congtay.com/watch">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content=""><!-- worker chèn ảnh đại diện video -->
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Đang xem · CÒNG TAY">
+<meta name="twitter:description" content="Xem video còng tay - tuyển tập video giải trí.">
+<meta name="twitter:image" content="">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafafa; --surface:#ffffff; --ink:#0f1012; --ink-2:#6b7180;
+    --line:#ececef; --line-2:#e0e3e8; --accent:#ff3b25; --accent-soft:#ffece8;
+    --radius:14px; --maxw:1180px; --nav-h:62px; --shadow:0 14px 34px -14px rgba(15,16,18,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);
+    font-family:"Be Vietnam Pro",system-ui,sans-serif;line-height:1.55;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:480px;pointer-events:none;z-index:0;
+    background:radial-gradient(80% 100% at 50% -20%, rgba(255,59,37,.06), transparent 70%)}
+  .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  a{color:inherit}
+
+  /* ===== NAV ===== */
+  nav{position:sticky;top:0;z-index:40;height:var(--nav-h);
+    background:rgba(250,250,250,.8);backdrop-filter:blur(12px);
+    border-bottom:1px solid transparent;transition:border-color .3s,box-shadow .3s}
+  nav.scrolled{border-color:var(--line);box-shadow:0 6px 20px -14px rgba(15,16,18,.3)}
+  .navin{max-width:var(--maxw);margin:0 auto;padding:0 24px;height:100%;
+    display:flex;align-items:center;justify-content:space-between;gap:18px}
+  .logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--ink)}
+  .logo h1{font-weight:800;font-size:19px;letter-spacing:-.02em;line-height:1}
+  .navlinks{display:flex;align-items:center;gap:8px}
+  .navlinks a.simple{color:var(--ink-2);text-decoration:none;font-size:14px;font-weight:500;
+    padding:8px 12px;border-radius:8px;transition:color .15s}
+  .navlinks a.simple:hover{color:var(--ink)}
+  .dd{position:relative}
+  .ddbtn{display:flex;align-items:center;gap:7px;cursor:pointer;background:var(--ink);color:#fff;
+    border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:600;
+    padding:10px 15px;transition:background .18s}
+  .ddbtn:hover{background:#26282d}
+  .ddbtn .arr{transition:transform .2s}
+  .dd.open .ddbtn .arr{transform:rotate(180deg)}
+  .ddmenu{position:absolute;right:0;top:calc(100% + 10px);min-width:250px;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:7px;
+    opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;max-height:70vh;overflow:auto}
+  .dd.open .ddmenu{opacity:1;visibility:visible;transform:none}
+  .ddmenu a{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);
+    font-size:14px;font-weight:500;padding:10px 11px;border-radius:8px;transition:background .12s}
+  .ddmenu a:hover{background:var(--bg)}
+  .ddmenu a .ic{font-size:16px;line-height:1}
+  .ddmenu a b{margin-left:auto;font-weight:600;font-size:12px;color:var(--ink-2)}
+
+  /* ===== WATCH ===== */
+  .back{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:var(--ink-2);
+    font-size:14px;font-weight:600;margin:24px 0 16px;transition:color .15s}
+  .back:hover{color:var(--accent)}
+  .stage{background:#000;border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  .pframe{position:relative;aspect-ratio:16/9;background:#000}
+  .pframe video,.pframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .wmeta{padding:22px 2px 8px}
+  .wmeta .cat{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  .wmeta h2{font-size:clamp(22px,3.2vw,30px);font-weight:800;letter-spacing:-.02em;margin:8px 0 10px;line-height:1.18}
+  .wmeta .dur{display:inline-block;font-size:13px;font-weight:600;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--line-2);border-radius:100px;padding:4px 12px;margin-bottom:12px}
+  .wmeta p{color:var(--ink-2);font-size:15px;max-width:760px}
+
+  /* ===== SUGGESTIONS ===== */
+  .sug{padding:40px 0 6px}
+  .sechead{display:flex;align-items:center;gap:13px;padding-bottom:18px;margin-bottom:26px;
+    border-bottom:1px solid var(--line-2)}
+  .sechead .ic{font-size:26px;line-height:1}
+  .sechead h3{font-weight:700;font-size:clamp(21px,3vw,28px);letter-spacing:-.02em}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px}
+
+  .card{display:block;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;cursor:pointer;position:relative;text-decoration:none;color:inherit;
+    transition:transform .25s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s}
+  .card:hover{transform:translateY(-6px);border-color:var(--line-2);box-shadow:var(--shadow)}
+  .thumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:#f0f0f2}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s}
+  .card:hover .thumb img{transform:scale(1.06)}
+  .gen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px;opacity:.5}
+  .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(15,16,18,.18);opacity:0;transition:opacity .25s}
+  .card:hover .play{opacity:1}
+  .play b{width:54px;height:54px;border-radius:50%;background:var(--accent);display:flex;
+    align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(255,59,37,.45);
+    transform:scale(.85);transition:transform .25s}
+  .card:hover .play b{transform:scale(1)}
+  .play b::after{content:"";border-style:solid;border-width:8px 0 8px 14px;
+    border-color:transparent transparent transparent #fff;margin-left:3px}
+  .dur2{position:absolute;right:9px;bottom:9px;background:rgba(15,16,18,.82);color:#fff;
+    font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;backdrop-filter:blur(2px)}
+  .cbody{padding:14px 16px 18px}
+  .cat{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  .card h4{font-size:17px;font-weight:600;line-height:1.3;margin:6px 0 5px;letter-spacing:-.01em}
+  .card p{font-size:13.5px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;
+    -webkit-box-orient:vertical;overflow:hidden}
+
+  .state{text-align:center;padding:90px 20px;color:var(--ink-2)}
+  .state p{font-size:16px;margin-top:16px}
+  .state a{color:var(--accent);font-weight:600;text-decoration:none}
+  .spinner{width:40px;height:40px;border:3px solid var(--line-2);border-top-color:var(--accent);
+    border-radius:50%;margin:0 auto;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  footer{border-top:1px solid var(--line);margin-top:46px;padding:28px 0 50px;color:var(--ink-2);
+    font-size:13px;text-align:center}
+  @media(max-width:640px){.navlinks a.simple{display:none}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="navin">
+    <a class="logo" href="/">
+      <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+        <circle cx="15" cy="30" r="10" stroke="#ff3b25" stroke-width="2.6"/>
+        <circle cx="33" cy="30" r="10" stroke="#0f1012" stroke-width="2.6"/>
+        <path d="M15 20v-4a4 4 0 0 1 4-4M33 20v-4a4 4 0 0 0-4-4" stroke="#0f1012" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M19 12h10" stroke="#ff3b25" stroke-width="2.6" stroke-linecap="round"/>
+      </svg>
+      <h1 data-site-title>CÒNG TAY</h1>
+    </a>
+    <div class="navlinks">
+      <a class="simple" href="/">Trang chủ</a>
+      <div class="dd" id="dd">
+        <button class="ddbtn" id="ddbtn">Danh mục
+          <svg class="arr" width="11" height="11" viewBox="0 0 12 12" fill="none">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="ddmenu" id="ddmenu"></div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <a class="back" href="/">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+      <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Về trang chủ
+  </a>
+  <main id="content"><div class="state"><div class="spinner"></div><p>Đang tải video...</p></div></main>
+  <footer>© <span id="yr"></span> <span id="footerText">CÒNG TAY — Tuyển tập video giải trí.</span></footer>
+</div>
+
+<script>
+const DATA_URL="/api/videos";
+const content=document.getElementById('content'),ddmenu=document.getElementById('ddmenu'),
+      nav=document.getElementById('nav');
+let VIDEOS=[], CATEGORIES=[], SETTINGS={};
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* ---- thống kê ---- */
+function track(payload){
+  try{
+    fetch("/api/track",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify(payload),keepalive:true}).catch(()=>{});
+  }catch(_){}}
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function slug(s){return s.normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function watchURL(v){return "/watch?v="+encodeURIComponent(v.src||"");}
+
+function guessIcon(cat){const c=cat.toLowerCase();
+  if(c.includes("phim")) return "🎬";
+  if(c.includes("trung qu")) return "🇨🇳";
+  if(c.includes("việt nam")||c.includes("viet nam")) return "🇻🇳";
+  if(c.includes("hàn")||c.includes("han")) return "🇰🇷";
+  if(c.includes("thái")||c.includes("thai")) return "🇹🇭";
+  if(c.includes("quốc tế")||c.includes("quoc te")) return "🌍";
+  return "🔒";}
+function catIcon(cat){const found=CATEGORIES.find(c=>c.name===cat);
+  return (found&&found.icon)||guessIcon(cat);}
+
+function applySettings(){const s=SETTINGS||{};
+  if(s.siteTitle)document.querySelectorAll('[data-site-title]').forEach(el=>el.textContent=s.siteTitle);
+  if(s.footer!=null)document.getElementById('footerText').textContent=s.footer;}
+
+/* menu danh mục: trỏ về các mục trên trang chủ */
+function buildMenu(){
+  const m=new Map();
+  VIDEOS.forEach(v=>{if(!m.has(v.category))m.set(v.category,0);m.set(v.category,m.get(v.category)+1);});
+  let dd=`<a href="/#sec-all"><span class="ic">🆕</span>Tất cả video<b>${VIDEOS.length}</b></a>`;
+  const seen=new Set();
+  CATEGORIES.forEach(c=>{if(m.has(c.name)){seen.add(c.name);
+    dd+=`<a href="/#cat-${slug(c.name)}"><span class="ic">${catIcon(c.name)}</span>${esc(c.name)}<b>${m.get(c.name)}</b></a>`;}});
+  m.forEach((n,name)=>{if(!seen.has(name))
+    dd+=`<a href="/#cat-${slug(name)}"><span class="ic">${catIcon(name)}</span>${esc(name)}<b>${n}</b></a>`;});
+  ddmenu.innerHTML=dd;}
+
+function cardHTML(v){
+  const thumb=v.thumb?`<img src="${esc(v.thumb)}" alt="${esc(v.title)}" loading="lazy">`:`<div class="gen">${catIcon(v.category)}</div>`;
+  return `<a class="card" href="${watchURL(v)}">
+    <div class="thumb">${thumb}<div class="play"><b></b></div><span class="dur2">${esc(v.duration||"")}</span></div>
+    <div class="cbody"><div class="cat">${esc(v.category)}</div><h4>${esc(v.title)}</h4><p>${esc(v.desc||"")}</p></div>
+  </a>`;}
+
+/* trộn mảng (Fisher–Yates) */
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+const SUGGEST_LIMIT=12;
+
+function renderVideo(v){
+  // tiêu đề + thẻ meta của trang (client; worker đã chèn sẵn cho bot)
+  if(SETTINGS.siteTitle)document.title=v.title+" · "+SETTINGS.siteTitle;
+  else document.title=v.title+" · CÒNG TAY";
+
+  const frame=v.type==="embed"
+    ? `<iframe src="${esc(v.src)}" allow="autoplay;fullscreen;encrypted-media" allowfullscreen></iframe>`
+    : `<video src="${esc(v.src)}" controls autoplay playsinline></video>`;
+
+  // gợi ý: ưu tiên cùng danh mục, rồi bù thêm video ngẫu nhiên khác
+  const others=VIDEOS.filter(x=>x!==v && (x.src||"")!==(v.src||""));
+  const sameCat=shuffle(others.filter(x=>x.category===v.category));
+  const restCat=shuffle(others.filter(x=>x.category!==v.category));
+  const picks=[...sameCat,...restCat].slice(0,SUGGEST_LIMIT);
+  const sug=picks.length
+    ? `<section class="sug">
+        <div class="sechead"><span class="ic">🎲</span><h3>Video gợi ý</h3></div>
+        <div class="grid">${picks.map(cardHTML).join('')}</div>
+       </section>`
+    : "";
+
+  content.innerHTML=`
+    <div class="stage"><div class="pframe">${frame}</div></div>
+    <div class="wmeta">
+      <div class="cat">${esc(v.category)}</div>
+      <h2>${esc(v.title)}</h2>
+      ${v.duration?`<div class="dur">⏱ ${esc(v.duration)}</div>`:""}
+      ${v.desc?`<p>${esc(v.desc)}</p>`:""}
+    </div>${sug}`;
+
+  // đếm lượt xem
+  const vkey=v.src||v.title;
+  if(vkey)track({type:"view",key:vkey,title:v.title});
+}
+
+function notFound(){
+  content.innerHTML=`<div class="state"><p>Không tìm thấy video này.<br><a href="/">Quay về trang chủ</a></p></div>`;
+}
+
+const dd=document.getElementById('dd');
+document.getElementById('ddbtn').onclick=e=>{e.stopPropagation();dd.classList.toggle('open');};
+document.addEventListener('click',()=>dd.classList.remove('open'));
+ddmenu.onclick=e=>{if(e.target.closest('a'))dd.classList.remove('open');};
+addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>10));
+
+async function load(){
+  const want=new URLSearchParams(location.search).get("v")||"";
+  try{
+    const [cats,sett]=await Promise.all([
+      fetch("/api/categories?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).catch(()=>[]),
+      fetch("/api/settings?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()).catch(()=>({})),
+    ]);
+    if(Array.isArray(cats))CATEGORIES=cats;
+    if(sett&&typeof sett==="object")SETTINGS=sett;
+    applySettings();
+  }catch(_){}
+  try{
+    const res=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    VIDEOS=await res.json();
+    if(!Array.isArray(VIDEOS))VIDEOS=[];
+    buildMenu();
+    const v=VIDEOS.find(x=>(x.src||"")===want);
+    if(!v){notFound();return;}
+    renderVideo(v);
+    track({type:"visit"});
+  }catch(err){
+    content.innerHTML=`<div class="state"><p>Không tải được video.<br><a href="/">Quay về trang chủ</a></p></div>`;
+    console.error(err);
+  }
+}
+load();
+</script>
+<!-- Cloudflare Web Analytics -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3f9adff8663e4a5883a1102e64bb7dcf"}'></script>
+<!-- End Cloudflare Web Analytics -->
+</body>
+</html>

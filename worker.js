@@ -359,6 +359,61 @@ async function serveHome(request, env) {
   return rw.transform(res);
 }
 
+// GET /watch?v=<src> -> phục vụ watch.html, chèn động tiêu đề + og:image + JSON-LD
+// cho đúng video (bot mạng xã hội / Google không chạy JS nên phải chèn ở server).
+async function serveWatch(request, env) {
+  const url = new URL(request.url);
+  const assetReq = new Request(new URL("/watch.html", url), { method: "GET", headers: request.headers });
+  const res = await env.ASSETS.fetch(assetReq);
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("text/html")) return res;
+
+  const want = url.searchParams.get("v") || "";
+  let video = null;
+  try {
+    const raw = await readJSON(env, "videos.json", []);
+    const list = Array.isArray(raw) ? raw : [];
+    video = list.find((x) => x && (x.src || "") === want) || null;
+  } catch (_) {}
+
+  const site = "CÒNG TAY";
+  const title = video ? `${video.title} · ${site}` : `Đang xem · ${site}`;
+  const desc = video ? (video.desc || video.title) : "Xem video còng tay - tuyển tập video giải trí.";
+  const img = video ? (video.thumb || "") : "";
+  const canon = `https://congtay.com/watch${want ? "?v=" + encodeURIComponent(want) : ""}`;
+
+  const setContent = (val) => ({ element(e) { val ? e.setAttribute("content", val) : e.remove(); } });
+
+  let rw = new HTMLRewriter()
+    .on("title", { element(e) { e.setInnerContent(title); } })
+    .on('meta[name="description"]', setContent(desc))
+    .on('meta[property="og:title"]', setContent(title))
+    .on('meta[property="og:description"]', setContent(desc))
+    .on('meta[property="og:url"]', setContent(canon))
+    .on('meta[property="og:image"]', setContent(img))
+    .on('meta[name="twitter:title"]', setContent(title))
+    .on('meta[name="twitter:description"]', setContent(desc))
+    .on('meta[name="twitter:image"]', setContent(img))
+    .on('link[rel="canonical"]', { element(e) { e.setAttribute("href", canon); } });
+
+  if (video) {
+    const o = {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: video.title,
+      description: video.desc || video.title,
+      thumbnailUrl: video.thumb || undefined,
+      uploadDate: video.createdAt ? new Date(video.createdAt).toISOString() : undefined,
+      contentUrl: video.type === "file" ? video.src : undefined,
+      embedUrl: video.type === "embed" ? video.src : undefined,
+    };
+    Object.keys(o).forEach((k) => o[k] === undefined && delete o[k]);
+    const ld = `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`;
+    rw = rw.on("head", { element(e) { e.append(ld, { html: true }); } });
+  }
+  return rw.transform(res);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -379,6 +434,10 @@ export default {
     // ── Trang chủ: chèn og:image động ──
     if ((pathname === "/" || pathname === "/index.html") && method === "GET")
       return serveHome(request, env);
+
+    // ── Trang xem video riêng: chèn meta động cho từng video ──
+    if (pathname === "/watch" && method === "GET")
+      return serveWatch(request, env);
 
     // ── API đọc (công khai) ──
     if (pathname === "/api/videos") return getVideos(env);

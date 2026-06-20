@@ -116,7 +116,8 @@
   .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
 
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  .card{display:block;text-decoration:none;color:inherit;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
     overflow:hidden;cursor:pointer;position:relative;
     transition:transform .25s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s,opacity .6s ease}
   .card:hover{transform:translateY(-6px);border-color:var(--line-2);box-shadow:var(--shadow)}
@@ -147,24 +148,6 @@
     border-radius:50%;margin:0 auto;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* ===== PLAYER ===== */
-  .modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
-    padding:24px;background:rgba(15,16,18,.6);backdrop-filter:blur(6px)}
-  .modal.open{display:flex;animation:fade .25s}
-  @keyframes fade{from{opacity:0}to{opacity:1}}
-  .player{width:100%;max-width:960px;background:#000;border-radius:16px;overflow:hidden;
-    box-shadow:0 40px 90px -20px rgba(0,0,0,.55);animation:pop .3s cubic-bezier(.2,.8,.2,1)}
-  @keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
-  .pframe{position:relative;aspect-ratio:16/9;background:#000}
-  .pframe video,.pframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-  .pmeta{padding:16px 20px 20px;background:var(--surface)}
-  .pmeta .cat{margin-bottom:4px}
-  .pmeta h3{font-size:21px;font-weight:700;margin-bottom:5px;letter-spacing:-.01em}
-  .pmeta p{color:var(--ink-2);font-size:14.5px}
-  .close{position:absolute;top:16px;right:18px;z-index:2;width:40px;height:40px;border-radius:50%;
-    border:none;background:rgba(255,255,255,.92);color:#0f1012;font-size:22px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;transition:all .2s}
-  .close:hover{background:var(--accent);color:#fff;transform:rotate(90deg)}
   footer{border-top:1px solid var(--line);margin-top:46px;padding:28px 0 50px;color:var(--ink-2);
     font-size:13px;text-align:center}
   @media(max-width:640px){.navlinks a.simple{display:none}.hero{padding:48px 0 28px}.grid{grid-template-columns:1fr}}
@@ -215,14 +198,6 @@
   <footer>© <span id="yr"></span> <span id="footerText">CÒNG TAY — Tuyển tập video giải trí.</span></footer>
 </div>
 
-<div class="modal" id="modal">
-  <div class="player">
-    <button class="close" id="close" aria-label="Đóng">×</button>
-    <div class="pframe" id="pframe"></div>
-    <div class="pmeta"><div class="cat" id="pcat"></div><h3 id="ptitle"></h3><p id="pdesc"></p></div>
-  </div>
-</div>
-
 <script>
 /* ================================================================
    Đọc dữ liệu từ videos.json nằm cùng thư mục (không cần CORS).
@@ -232,13 +207,11 @@ const DATA_URL = "/api/videos";
 /* ---------- không cần sửa từ đây trở xuống ---------- */
 const content=document.getElementById('content'),ddmenu=document.getElementById('ddmenu'),
       quick=document.getElementById('quick'),qEl=document.getElementById('q'),
-      modal=document.getElementById('modal'),pframe=document.getElementById('pframe'),
       nav=document.getElementById('nav');
 let VIDEOS=[], CATEGORIES=[], SETTINGS={}, query="";
 document.getElementById('yr').textContent=new Date().getFullYear();
 
-/* ---- thống kê: gửi lượt truy cập / lượt xem (không chặn giao diện) ---- */
-const trackedViews=new Set();
+/* ---- thống kê: gửi lượt truy cập (lượt xem được đếm ở trang /watch) ---- */
 function track(payload){
   try{
     fetch("/api/track",{method:"POST",headers:{"content-type":"application/json"},
@@ -292,12 +265,13 @@ function allVideosSorted(){
 }
 function matchQ(v){return !query||(v.title+v.desc+v.category).toLowerCase().includes(query);}
 
-function cardHTML(v,delay,extra){const idx=VIDEOS.indexOf(v);
+function cardHTML(v,delay,extra){
+  const href="/watch?v="+encodeURIComponent(v.src||"");
   const thumb=v.thumb?`<img src="${v.thumb}" alt="" loading="lazy">`:`<div class="gen">${catIcon(v.category)}</div>`;
-  return `<article class="card reveal${extra?' extra':''}" style="transition-delay:${delay}ms" data-i="${idx}">
+  return `<a class="card reveal${extra?' extra':''}" style="transition-delay:${delay}ms" href="${href}">
     <div class="thumb">${thumb}<div class="play"><b></b></div><span class="dur">${v.duration||""}</span></div>
     <div class="cbody"><div class="cat">${v.category}</div><h4>${v.title}</h4><p>${v.desc||""}</p></div>
-  </article>`;}
+  </a>`;}
 
 function sectionHTML(id,ic,name,items){
   const limited=!query&&items.length>SECTION_LIMIT;
@@ -332,7 +306,6 @@ function render(){
     if(!shown.length)return;any=true;
     html+=sectionHTML("cat-"+slug(cat),catIcon(cat),cat,shown);});
   content.innerHTML = any ? html : `<div class="state"><p>Không tìm thấy video phù hợp.</p></div>`;
-  content.querySelectorAll('.card').forEach(c=>c.onclick=()=>openV(VIDEOS[+c.dataset.i]));
   if(io)io.disconnect();
   io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
   content.querySelectorAll('.reveal').forEach(el=>io.observe(el));
@@ -349,26 +322,10 @@ content.addEventListener('click',e=>{
   const more=b.closest('.more'); if(more)more.remove();
 });
 
-function openV(v){
-  const vkey=v.src||v.title;
-  if(vkey&&!trackedViews.has(vkey)){trackedViews.add(vkey);track({type:"view",key:vkey,title:v.title});}
-  pframe.innerHTML = v.type==="embed"
-    ? `<iframe src="${v.src}" allow="autoplay;fullscreen;encrypted-media" allowfullscreen></iframe>`
-    : `<video src="${v.src}" controls autoplay playsinline></video>`;
-  document.getElementById('pcat').textContent=v.category;
-  document.getElementById('ptitle').textContent=v.title;
-  document.getElementById('pdesc').textContent=v.desc||"";
-  modal.classList.add('open');
-}
-function closeV(){modal.classList.remove('open');pframe.innerHTML="";}
-
 const dd=document.getElementById('dd');
 document.getElementById('ddbtn').onclick=e=>{e.stopPropagation();dd.classList.toggle('open');};
 document.addEventListener('click',()=>dd.classList.remove('open'));
 ddmenu.onclick=e=>{if(e.target.closest('a'))dd.classList.remove('open');};
-document.getElementById('close').onclick=closeV;
-modal.onclick=e=>{if(e.target===modal)closeV();};
-document.addEventListener('keydown',e=>{if(e.key==="Escape")closeV();});
 qEl.oninput=e=>{query=e.target.value.toLowerCase().trim();render();};
 addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>10));
 
