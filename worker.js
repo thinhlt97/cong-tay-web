@@ -326,27 +326,22 @@ async function serveHome(request, env) {
 
   const setOrRemove = { element(e) { img ? e.setAttribute("content", img) : e.remove(); } };
 
-  // JSON-LD: danh sách video (giúp Google hiểu nội dung + cơ hội rich result)
-  const vids = list.filter((v) => v && v.title).slice(0, 30).map((v) => {
-    const o = {
-      "@type": "VideoObject",
-      name: v.title,
-      description: v.desc || v.title,
-      thumbnailUrl: v.thumb || img || undefined,
-      uploadDate: v.createdAt ? new Date(v.createdAt).toISOString() : undefined,
-      contentUrl: v.type === "file" ? v.src : undefined,
-      embedUrl: v.type === "embed" ? v.src : undefined,
-    };
-    Object.keys(o).forEach((k) => o[k] === undefined && delete o[k]);
-    return o;
-  });
+  // JSON-LD: danh sách video dạng ItemList, mỗi mục TRỎ URL sang trang /watch
+  // (không nhúng VideoObject ở đây). Trang chủ không có trình phát, nên nếu nhúng
+  // VideoObject thẳng vào đây Google sẽ báo lỗi "Video không nằm trên trang xem".
+  // VideoObject chỉ đặt ở trang /watch (serveWatch) là nơi thật sự xem được.
+  const vids = list.filter((v) => v && v.title && v.src).slice(0, 30);
   let ld = "";
   if (vids.length) {
     const doc = {
       "@context": "https://schema.org",
       "@type": "ItemList",
       name: "Tuyển tập video còng tay",
-      itemListElement: vids.map((it, i) => ({ "@type": "ListItem", position: i + 1, item: it })),
+      itemListElement: vids.map((v, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `https://congtay.com/watch?v=${encodeURIComponent(v.src)}`,
+      })),
     };
     // chèn JSON vào HTML: thay "<" để không phá thẻ <script>
     ld = `<script type="application/ld+json">${JSON.stringify(doc).replace(/</g, "\\u003c")}</script>`;
